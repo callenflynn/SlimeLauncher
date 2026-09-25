@@ -1,0 +1,38 @@
+site_name: "Slime Launcher"
+brand_name: "SLIME"
+site_url: "https://callenflynn.github.io/SlimeLauncher/"
+accent_color: "#39ff14"
+license_text: "Slime Launcher documentation. Prism Launcher remains the source of truth."
+
+repo:
+  url: "https://github.com/callenflynn/SlimeLauncher"
+  branch: "main"
+
+assets:
+  css: null
+  favicon_dark: null
+  favicon_light: null
+
+features:
+  theme_toggle: true
+  clean_stale_files: true
+  edit_button: true
+  copy_button: true
+
+nav:
+  "Getting started":
+    - index.md
+    - building.md
+    - installing-prism.md
+  "Architecture":
+    - architecture.md
+    - compatibility-boundaries.md
+    - data-ownership.md
+  "Using Slime Launcher":
+    - setup-wizard.md
+    - controller-navigation.md
+    - log-viewer.md
+  "Maintenance":
+    - theming.md
+    - troubleshooting.md
+    - wiki.md

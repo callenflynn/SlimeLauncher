@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Slime Launcher
+GenericName=Minecraft Launcher Frontend
+Comment=Controller-navigable frontend for native Prism Launcher
+Exec=slime-launcher
+Icon=slime-launcher
+Terminal=false
+Categories=Game;ActionGame;
+Keywords=minecraft;prism;launcher;controller;
+StartupNotify=true

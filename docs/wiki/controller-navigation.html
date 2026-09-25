@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gamepad mapping, keyboard shortcuts, and focus model">
+  <title>Controller navigation - Slime Launcher</title>
+  
+  <style>:root { --brand-accent: #39ff14; }</style>
+  
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; }
+    html[data-theme="dark"] { background: #12151a; color: #d6dae0; }
+    html[data-theme="light"] { background: #ffffff; color: #1c2127; }
+    html[data-theme="dark"] a { color: var(--brand-accent); }
+    html[data-theme="light"] a { color: var(--brand-accent); }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 1.2rem; border-bottom: 1px solid rgba(128,128,128,.25); position: sticky; top: 0; backdrop-filter: blur(6px); }
+    .brand { font-weight: 700; text-decoration: none; color: inherit; }
+    .brand span { color: var(--brand-accent); }
+    .theme-btn { border: 1px solid rgba(128,128,128,.35); background: transparent; color: inherit; border-radius: 6px; padding: 0.25rem 0.6rem; cursor: pointer; }
+    .layout { display: flex; gap: 2rem; max-width: 75rem; margin: 0 auto; padding: 1.5rem 1.2rem; }
+    .nsdocs-nav { min-width: 13rem; }
+    .nsdocs-nav .nav-section { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin: 1rem 0 .3rem; }
+    .nsdocs-nav a { display: block; padding: .25rem .5rem; border-radius: 6px; text-decoration: none; }
+    .nsdocs-nav a.active { background: var(--brand-accent); color: #fff; }
+    html[data-theme="dark"] .nsdocs-nav a { color: #d6dae0; }
+    html[data-theme="light"] .nsdocs-nav a { color: #1c2127; }
+    html[data-theme="dark"] .nsdocs-nav a.active, html[data-theme="light"] .nsdocs-nav a.active { color: #fff; }
+    main { flex: 1; min-width: 0; }
+    pre { position: relative; background: rgba(128,128,128,.12); border-radius: 8px; padding: 1rem; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9em; }
+    p code, li code { background: rgba(128,128,128,.15); border-radius: 4px; padding: .1rem .3rem; }
+    .copy-btn { position: absolute; top: .4rem; right: .4rem; font-size: .72rem; border: 1px solid rgba(128,128,128,.4); background: rgba(128,128,128,.08); color: inherit; border-radius: 5px; padding: .15rem .5rem; cursor: pointer; opacity: .75; }
+    .copy-btn:hover { opacity: 1; }
+    .admonition { border-left: 4px solid var(--brand-accent); background: rgba(128,128,128,.08); border-radius: 0 8px 8px 0; padding: .6rem 1rem; margin: 1rem 0; }
+    .admonition-warning { border-left-color: #d29922; }
+    .admonition-title { font-weight: 700; margin: 0 0 .25rem; text-transform: capitalize; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid rgba(128,128,128,.3); padding: .45rem .7rem; text-align: left; }
+    th { background: rgba(128,128,128,.1); }
+    blockquote { border-left: 4px solid rgba(128,128,128,.4); margin: 1rem 0; padding: .2rem 1rem; }
+    footer { max-width: 75rem; margin: 0 auto; padding: 1rem 1.2rem 2rem; border-top: 1px solid rgba(128,128,128,.25); display: flex; justify-content: space-between; gap: 1rem; font-size: .85rem; opacity: .85; flex-wrap: wrap; }
+    @media (max-width: 48rem) { .layout { flex-direction: column; } .nsdocs-nav { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">SLIME<span> docs</span></a>
+    <button class="theme-btn" onclick="nsdocsToggleTheme()" title="Toggle theme">&#9789;</button>
+  </header>
+  <div class="layout">
+    <nav class="nsdocs-nav">
+<div class="nav-section">Getting started</div>
+<a href="index.html">Index</a>
+<a href="building.html">Building</a>
+<a href="installing-prism.html">Installing Prism</a>
+<div class="nav-section">Architecture</div>
+<a href="architecture.html">Architecture</a>
+<a href="compatibility-boundaries.html">Compatibility Boundaries</a>
+<a href="data-ownership.html">Data Ownership</a>
+<div class="nav-section">Using Slime Launcher</div>
+<a href="setup-wizard.html">Setup Wizard</a>
+<a href="controller-navigation.html" class="active">Controller Navigation</a>
+<a href="log-viewer.html">Log Viewer</a>
+<div class="nav-section">Maintenance</div>
+<a href="theming.html">Theming</a>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="wiki.html">Wiki</a>
+</nav>
+    <main>
+<h1 id="controller-navigation">Controller navigation</h1>
+<p>Slime Launcher is built for the couch: a gamepad, keyboard, and mouse all drive the <strong>same focus model</strong>. The gamepad layer is <code>GamepadFilter</code> (<code>src/GamepadFilter.cpp</code>), an application-wide event filter that reads <code>/dev/input/js*</code> directly — no SDL2 dependency — and posts synthetic Qt key events to the focused widget.</p>
+<h2 id="gamepad-mapping">Gamepad mapping</h2>
+<table><thead><tr><th>Input</th><th>Action</th></tr></thead><tbody><tr><td><strong>A</strong> (button 0)</td><td>Select / activate (Enter)</td></tr><tr><td><strong>B</strong> (button 1)</td><td>Back / close (Escape)</td></tr><tr><td><strong>X</strong> (button 2)</td><td>Refresh (F5)</td></tr><tr><td><strong>Y</strong> (button 3)</td><td>Tab</td></tr><tr><td><strong>Start</strong> (button 9)</td><td>Refresh (F5)</td></tr><tr><td><strong>D-pad / left stick</strong></td><td>Move focus (arrow keys)</td></tr></tbody></table>
+<ul><li>Analog stick deadzone: <strong>35%</strong></li><li>Hold-repeat: initial delay <strong>450 ms</strong>, then every <strong>120 ms</strong></li><li>Up to <strong>4 gamepads</strong>; hot-plug re-enumeration happens automatically (~every 2 s)</li><li>Device loss is silent — keyboard and mouse always remain functional</li></ul>
+<p>!!! note Most controllers work out of the box: any device exposing <code>/dev/input/js*</code> (xpad, steamcontroller, generic HID joypads) is supported. If your pad lacks a standard button layout, the A/B/X/Y indices above follow the Linux joystick API convention.</p>
+<h2 id="keyboard-shortcuts">Keyboard shortcuts</h2>
+<table><thead><tr><th>Key</th><th>Action</th></tr></thead><tbody><tr><td><code>Enter</code></td><td>Play the selected instance</td></tr><tr><td><code>F5</code></td><td>Force-refresh the instance sync from disk</td></tr><tr><td><code>Escape</code></td><td>Back out: close log/error view → clear search filter</td></tr><tr><td><code>L</code></td><td>Open the log viewer for the selected instance</td></tr><tr><td><code>O</code></td><td>Open the native Prism UI</td></tr><tr><td>Arrows / Tab</td><td>Move focus across cards and navigation</td></tr></tbody></table>
+<h2 id="mouse">Mouse</h2>
+<ul><li><strong>Click</strong> a card to select it</li><li><strong>Double-click</strong> to play it</li><li>Standard scroll mechanics everywhere</li></ul>
+<h2 id="focus-visuals">Focus visuals</h2>
+<p>The focused card gets a <strong>3px neon ring</strong> plus a painted 8px glow (QSS has no box-shadow, so <code>InstanceCard::paintEvent</code> renders the glow). Buttons get a 3px accent border. Hover, focus, and pressed states exist on every interactive element.</p>
+<h2 id="how-it-works-internally">How it works internally</h2>
+<div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-text">/dev/input/js0 ──read()──► GamepadFilter (poll timer, 16 ms)
+                             │  decode js_event
+                             │  deadzone + repeat logic
+                             ▼
+                 QKeyEvent(KeyPress/KeyRelease)
+                             ▼
+                 QApplication::sendEvent(focusWidget)</code></pre></div>
+<p>Because the gamepad feeds the <em>same</em> event stream as the keyboard, no widget ever needs special gamepad handling — a card reacts to a gamepad <strong>A</strong> exactly like a real Enter keypress.</p>
+    </main>
+  </div>
+  <footer>
+    <span>Slime Launcher documentation. Prism Launcher remains the source of truth.</span>
+    <a class="edit-link" href="https://github.com/callenflynn/SlimeLauncher/edit/main/docs/wiki-src/controller-navigation.md" target="_blank" rel="noopener">Edit on GitHub</a>
+  </footer>
+  <script>(function () {
+  var root = document.documentElement;
+  var stored = localStorage.getItem('nsdocs-theme');
+  var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  root.setAttribute('data-theme', theme);
+  window.nsdocsToggleTheme = function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('nsdocs-theme', next);
+  };
+})();</script>
+  <script>(function () {
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var code = btn.parentElement.querySelector('code');
+      if (!code) return;
+      navigator.clipboard.writeText(code.textContent).then(function () {
+        var old = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function () { btn.textContent = old; }, 1500);
+      });
+    });
+  });
+})();</script>
+</body>
+</html>

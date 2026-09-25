@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The read-vs-write rules that keep Prism state intact">
+  <title>Compatibility boundaries - Slime Launcher</title>
+  
+  <style>:root { --brand-accent: #39ff14; }</style>
+  
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; }
+    html[data-theme="dark"] { background: #12151a; color: #d6dae0; }
+    html[data-theme="light"] { background: #ffffff; color: #1c2127; }
+    html[data-theme="dark"] a { color: var(--brand-accent); }
+    html[data-theme="light"] a { color: var(--brand-accent); }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 1.2rem; border-bottom: 1px solid rgba(128,128,128,.25); position: sticky; top: 0; backdrop-filter: blur(6px); }
+    .brand { font-weight: 700; text-decoration: none; color: inherit; }
+    .brand span { color: var(--brand-accent); }
+    .theme-btn { border: 1px solid rgba(128,128,128,.35); background: transparent; color: inherit; border-radius: 6px; padding: 0.25rem 0.6rem; cursor: pointer; }
+    .layout { display: flex; gap: 2rem; max-width: 75rem; margin: 0 auto; padding: 1.5rem 1.2rem; }
+    .nsdocs-nav { min-width: 13rem; }
+    .nsdocs-nav .nav-section { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin: 1rem 0 .3rem; }
+    .nsdocs-nav a { display: block; padding: .25rem .5rem; border-radius: 6px; text-decoration: none; }
+    .nsdocs-nav a.active { background: var(--brand-accent); color: #fff; }
+    html[data-theme="dark"] .nsdocs-nav a { color: #d6dae0; }
+    html[data-theme="light"] .nsdocs-nav a { color: #1c2127; }
+    html[data-theme="dark"] .nsdocs-nav a.active, html[data-theme="light"] .nsdocs-nav a.active { color: #fff; }
+    main { flex: 1; min-width: 0; }
+    pre { position: relative; background: rgba(128,128,128,.12); border-radius: 8px; padding: 1rem; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9em; }
+    p code, li code { background: rgba(128,128,128,.15); border-radius: 4px; padding: .1rem .3rem; }
+    .copy-btn { position: absolute; top: .4rem; right: .4rem; font-size: .72rem; border: 1px solid rgba(128,128,128,.4); background: rgba(128,128,128,.08); color: inherit; border-radius: 5px; padding: .15rem .5rem; cursor: pointer; opacity: .75; }
+    .copy-btn:hover { opacity: 1; }
+    .admonition { border-left: 4px solid var(--brand-accent); background: rgba(128,128,128,.08); border-radius: 0 8px 8px 0; padding: .6rem 1rem; margin: 1rem 0; }
+    .admonition-warning { border-left-color: #d29922; }
+    .admonition-title { font-weight: 700; margin: 0 0 .25rem; text-transform: capitalize; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid rgba(128,128,128,.3); padding: .45rem .7rem; text-align: left; }
+    th { background: rgba(128,128,128,.1); }
+    blockquote { border-left: 4px solid rgba(128,128,128,.4); margin: 1rem 0; padding: .2rem 1rem; }
+    footer { max-width: 75rem; margin: 0 auto; padding: 1rem 1.2rem 2rem; border-top: 1px solid rgba(128,128,128,.25); display: flex; justify-content: space-between; gap: 1rem; font-size: .85rem; opacity: .85; flex-wrap: wrap; }
+    @media (max-width: 48rem) { .layout { flex-direction: column; } .nsdocs-nav { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">SLIME<span> docs</span></a>
+    <button class="theme-btn" onclick="nsdocsToggleTheme()" title="Toggle theme">&#9789;</button>
+  </header>
+  <div class="layout">
+    <nav class="nsdocs-nav">
+<div class="nav-section">Getting started</div>
+<a href="index.html">Index</a>
+<a href="building.html">Building</a>
+<a href="installing-prism.html">Installing Prism</a>
+<div class="nav-section">Architecture</div>
+<a href="architecture.html">Architecture</a>
+<a href="compatibility-boundaries.html" class="active">Compatibility Boundaries</a>
+<a href="data-ownership.html">Data Ownership</a>
+<div class="nav-section">Using Slime Launcher</div>
+<a href="setup-wizard.html">Setup Wizard</a>
+<a href="controller-navigation.html">Controller Navigation</a>
+<a href="log-viewer.html">Log Viewer</a>
+<div class="nav-section">Maintenance</div>
+<a href="theming.html">Theming</a>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="wiki.html">Wiki</a>
+</nav>
+    <main>
+<h1 id="compatibility-boundaries">Compatibility boundaries</h1>
+<p>These rules are non-negotiable. They guarantee Slime Launcher can never corrupt a Prism installation and that upstream Prism updates keep working.</p>
+<h2 id="1-prism-as-source-of-truth">1. Prism as source of truth</h2>
+<p>Slime Launcher is a <strong>frontend and orchestration interface only</strong>. The local Prism directory configuration and instance metadata are authoritative. If Prism's data and Slime's view ever disagree, Prism wins: press <code>F5</code> and Slime re-reads everything from disk.</p>
+<h2 id="2-read-vs-write-rules">2. Read vs. write rules</h2>
+<table><thead><tr><th>Data</th><th>Read</th><th>Write</th></tr></thead><tbody><tr><td><code>instances/*/instance.cfg</code></td><td>✔ <code>QSettings</code> IniFormat</td><td><strong>never</strong></td></tr><tr><td><code>instances/*/mmc-pack.json</code></td><td>✔ <code>QJsonDocument</code></td><td><strong>never</strong></td></tr><tr><td><code>instances/*/.minecraft/logs/latest.log</code></td><td>✔ tail only</td><td><strong>never</strong></td></tr><tr><td><code>accounts.json</code></td><td>✔ display only</td><td><strong>never</strong></td></tr><tr><td><code>icons/*</code></td><td>✔</td><td><strong>never</strong></td></tr><tr><td><code>prismlauncher.cfg</code> (Prism global config)</td><td>not even read</td><td><strong>never</strong></td></tr><tr><td><code>~/.config/SlimeLauncher/slime.conf</code></td><td>✔</td><td>✔ (the <strong>only</strong> file Slime writes)</td></tr></tbody></table>
+<p><code>slime.conf</code> stores exactly three keys: <code>General/Theme</code>, <code>General/BinaryPath</code>, <code>General/InstancesDir</code>. It is written once per wizard completion and never during normal operation.</p>
+<h2 id="3-execution-routing-via-cli">3. Execution routing via CLI</h2>
+<p>All launch operations route through Prism's standard CLI backend, spawned asynchronously:</p>
+<div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-cpp">QProcess::startDetached(&quot;prismlauncher&quot;, {&quot;--launch&quot;, instanceId});</code></pre></div>
+<ul><li>Opening the native Prism UI: <code>QProcess::startDetached(binaryPath, {})</code>.</li><li>Widgets never spawn processes directly — every spawn goes through <code>PrismBridge</code>.</li><li>The instance <strong>directory name</strong> is the CLI identifier; it is what Slime passes to <code>--launch</code>.</li></ul>
+<h2 id="4-native-only-target">4. Native-only target</h2>
+<p>Flatpak Prism is unsupported (sandbox isolation blocks IPC and file monitoring). Setup performs explicit detection of:</p>
+<ul><li><code>~/.var/app/org.prismlauncher.PrismLauncher</code> (user Flatpak)</li><li><code>/var/lib/flatpak/app/org.prismlauncher.PrismLauncher</code> (system Flatpak)</li></ul>
+<p>and refuses to continue with remediation instructions.</p>
+<h2 id="5-fallback-safety">5. Fallback safety</h2>
+<p>Any operation without a stable, safe programmatic abstraction gets an explicit fallback button that opens the native Prism UI instead:</p>
+<ul><li>Microsoft account sign-in and session management</li><li>Deep instance editing (settings, mods, worlds, screenshots)</li><li>Mod management and updates</li></ul>
+<p>Slime Launcher never reimplements these flows.</p>
+<h2 id="6-minimum-prism-version">6. Minimum Prism version</h2>
+<p><strong>Prism 9.0+.</strong> The CLI verbs (<code>--launch</code>) and metadata formats Slime reads are those of Prism 9.x.</p>
+    </main>
+  </div>
+  <footer>
+    <span>Slime Launcher documentation. Prism Launcher remains the source of truth.</span>
+    <a class="edit-link" href="https://github.com/callenflynn/SlimeLauncher/edit/main/docs/wiki-src/compatibility-boundaries.md" target="_blank" rel="noopener">Edit on GitHub</a>
+  </footer>
+  <script>(function () {
+  var root = document.documentElement;
+  var stored = localStorage.getItem('nsdocs-theme');
+  var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  root.setAttribute('data-theme', theme);
+  window.nsdocsToggleTheme = function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('nsdocs-theme', next);
+  };
+})();</script>
+  <script>(function () {
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var code = btn.parentElement.querySelector('code');
+      if (!code) return;
+      navigator.clipboard.writeText(code.textContent).then(function () {
+        var old = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function () { btn.textContent = old; }, 1500);
+      });
+    });
+  });
+})();</script>
+</body>
+</html>

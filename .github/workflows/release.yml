@@ -1,0 +1,83 @@
+name: release
+
+# Trigger: any pushed tag matching semantic versioning (v1.0.0, v1.2.3, v0.1.0-rc1, ...).
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+# contents: write is required so the workflow can create the GitHub Release
+# and attach the built archive to it.
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build & release (linux-x86_64)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (with submodules, if any)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            build-essential \
+            cmake \
+            ninja-build \
+            qt6-base-dev \
+            qt6-base-dev-tools \
+            libgl1-mesa-dev \
+            pkg-config
+
+      # Qt 6 development packages via apt (alternative: jurplel/install-qt-action
+      # — see the commented block at the bottom of this file).
+      - name: Configure (CMake / Ninja / Release)
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Stage package tree
+        run: |
+          mkdir -p pkg/slime-launcher-${GITHUB_REF_NAME}/bin
+          install -m 755 build/bin/slime-launcher \
+            pkg/slime-launcher-${GITHUB_REF_NAME}/bin/slime-launcher
+
+      - name: Archive
+        run: |
+          cd pkg
+          tar -czf ../slime-launcher-linux-x86_64.tar.gz \
+            slime-launcher-${GITHUB_REF_NAME}
+          cd ..
+          sha256sum slime-launcher-linux-x86_64.tar.gz > slime-launcher-linux-x86_64.tar.gz.sha256
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: slime-launcher-linux-x86_64
+          path: |
+            slime-launcher-linux-x86_64.tar.gz
+            slime-launcher-linux-x86_64.tar.gz.sha256
+          if-no-files-found: error
+
+      - name: Create GitHub Release and attach archive
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            slime-launcher-linux-x86_64.tar.gz
+            slime-launcher-linux-x86_64.tar.gz.sha256
+          generate_release_notes: true
+          fail_on_unmatched_files: true

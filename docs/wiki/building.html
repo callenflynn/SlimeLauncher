@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Build Slime Launcher from source on Arch Linux">
+  <title>Building - Slime Launcher</title>
+  
+  <style>:root { --brand-accent: #39ff14; }</style>
+  
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; }
+    html[data-theme="dark"] { background: #12151a; color: #d6dae0; }
+    html[data-theme="light"] { background: #ffffff; color: #1c2127; }
+    html[data-theme="dark"] a { color: var(--brand-accent); }
+    html[data-theme="light"] a { color: var(--brand-accent); }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 1.2rem; border-bottom: 1px solid rgba(128,128,128,.25); position: sticky; top: 0; backdrop-filter: blur(6px); }
+    .brand { font-weight: 700; text-decoration: none; color: inherit; }
+    .brand span { color: var(--brand-accent); }
+    .theme-btn { border: 1px solid rgba(128,128,128,.35); background: transparent; color: inherit; border-radius: 6px; padding: 0.25rem 0.6rem; cursor: pointer; }
+    .layout { display: flex; gap: 2rem; max-width: 75rem; margin: 0 auto; padding: 1.5rem 1.2rem; }
+    .nsdocs-nav { min-width: 13rem; }
+    .nsdocs-nav .nav-section { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin: 1rem 0 .3rem; }
+    .nsdocs-nav a { display: block; padding: .25rem .5rem; border-radius: 6px; text-decoration: none; }
+    .nsdocs-nav a.active { background: var(--brand-accent); color: #fff; }
+    html[data-theme="dark"] .nsdocs-nav a { color: #d6dae0; }
+    html[data-theme="light"] .nsdocs-nav a { color: #1c2127; }
+    html[data-theme="dark"] .nsdocs-nav a.active, html[data-theme="light"] .nsdocs-nav a.active { color: #fff; }
+    main { flex: 1; min-width: 0; }
+    pre { position: relative; background: rgba(128,128,128,.12); border-radius: 8px; padding: 1rem; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9em; }
+    p code, li code { background: rgba(128,128,128,.15); border-radius: 4px; padding: .1rem .3rem; }
+    .copy-btn { position: absolute; top: .4rem; right: .4rem; font-size: .72rem; border: 1px solid rgba(128,128,128,.4); background: rgba(128,128,128,.08); color: inherit; border-radius: 5px; padding: .15rem .5rem; cursor: pointer; opacity: .75; }
+    .copy-btn:hover { opacity: 1; }
+    .admonition { border-left: 4px solid var(--brand-accent); background: rgba(128,128,128,.08); border-radius: 0 8px 8px 0; padding: .6rem 1rem; margin: 1rem 0; }
+    .admonition-warning { border-left-color: #d29922; }
+    .admonition-title { font-weight: 700; margin: 0 0 .25rem; text-transform: capitalize; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid rgba(128,128,128,.3); padding: .45rem .7rem; text-align: left; }
+    th { background: rgba(128,128,128,.1); }
+    blockquote { border-left: 4px solid rgba(128,128,128,.4); margin: 1rem 0; padding: .2rem 1rem; }
+    footer { max-width: 75rem; margin: 0 auto; padding: 1rem 1.2rem 2rem; border-top: 1px solid rgba(128,128,128,.25); display: flex; justify-content: space-between; gap: 1rem; font-size: .85rem; opacity: .85; flex-wrap: wrap; }
+    @media (max-width: 48rem) { .layout { flex-direction: column; } .nsdocs-nav { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">SLIME<span> docs</span></a>
+    <button class="theme-btn" onclick="nsdocsToggleTheme()" title="Toggle theme">&#9789;</button>
+  </header>
+  <div class="layout">
+    <nav class="nsdocs-nav">
+<div class="nav-section">Getting started</div>
+<a href="index.html">Index</a>
+<a href="building.html" class="active">Building</a>
+<a href="installing-prism.html">Installing Prism</a>
+<div class="nav-section">Architecture</div>
+<a href="architecture.html">Architecture</a>
+<a href="compatibility-boundaries.html">Compatibility Boundaries</a>
+<a href="data-ownership.html">Data Ownership</a>
+<div class="nav-section">Using Slime Launcher</div>
+<a href="setup-wizard.html">Setup Wizard</a>
+<a href="controller-navigation.html">Controller Navigation</a>
+<a href="log-viewer.html">Log Viewer</a>
+<div class="nav-section">Maintenance</div>
+<a href="theming.html">Theming</a>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="wiki.html">Wiki</a>
+</nav>
+    <main>
+<h1 id="building">Building</h1>
+<h2 id="prerequisites-arch-linux">Prerequisites (Arch Linux)</h2>
+<div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-bash">sudo pacman -S --needed base-devel cmake ninja qt6-base</code></pre></div>
+<p>Qt 6.2 or newer is required. Any C++20-capable GCC or Clang works.</p>
+<h2 id="configure-and-build">Configure and build</h2>
+<div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-bash">cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build</code></pre></div>
+<p>The binary lands at <code>build/bin/slime-launcher</code>.</p>
+<p>!!! note Add <code>-DBUILD_TESTING=ON</code> to also build the headless smoke test (see <a href="troubleshooting.html">Troubleshooting</a>).</p>
+<h2 id="compile-options">Compile options</h2>
+<table><thead><tr><th>Option</th><th>Default</th><th>Purpose</th></tr></thead><tbody><tr><td><code>-DCMAKE_BUILD_TYPE</code></td><td><code>Release</code></td><td><code>Debug</code> adds no extra flags itself; use <code>Debug</code> + <code>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</code> for clangd</td></tr><tr><td><code>-DBUILD_TESTING</code></td><td><code>OFF</code></td><td>Builds <code>tests/PrismBridgeSmokeTest.cpp</code> into <code>build/bin/prism-bridge-smoke</code></td></tr></tbody></table>
+<h2 id="static-analysis">Static analysis</h2>
+<p>The build compiles clean at <code>-Wall -Wextra -Wpedantic</code>. For deeper checks:</p>
+<div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-bash">cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+clang-tidy -p build src
+cppcheck --enable=warning,performance,portability src</code></pre></div>
+<h2 id="install">Install</h2>
+<div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-bash">cmake --install build --prefix /usr</code></pre></div>
+<p>This installs:</p>
+<ul><li><code>/usr/bin/slime-launcher</code> — the binary</li><li><code>/usr/share/applications/slime-launcher.desktop</code> — desktop entry</li></ul>
+<h2 id="toolchain-notes-for-other-distros">Toolchain notes for other distros</h2>
+<p>The project targets Arch but builds anywhere Qt 6 and a C++20 compiler exist:</p>
+<table><thead><tr><th>Distro</th><th>Packages</th></tr></thead><tbody><tr><td>Debian / Ubuntu 24.04+</td><td><code>cmake ninja-build qt6-base-dev g++</code></td></tr><tr><td>Fedora</td><td><code>cmake ninja-build qt6-qtbase-devel gcc-c++</code></td></tr></tbody></table>
+    </main>
+  </div>
+  <footer>
+    <span>Slime Launcher documentation. Prism Launcher remains the source of truth.</span>
+    <a class="edit-link" href="https://github.com/callenflynn/SlimeLauncher/edit/main/docs/wiki-src/building.md" target="_blank" rel="noopener">Edit on GitHub</a>
+  </footer>
+  <script>(function () {
+  var root = document.documentElement;
+  var stored = localStorage.getItem('nsdocs-theme');
+  var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  root.setAttribute('data-theme', theme);
+  window.nsdocsToggleTheme = function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('nsdocs-theme', next);
+  };
+})();</script>
+  <script>(function () {
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var code = btn.parentElement.querySelector('code');
+      if (!code) return;
+      navigator.clipboard.writeText(code.textContent).then(function () {
+        var old = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function () { btn.textContent = old; }, 1500);
+      });
+    });
+  });
+})();</script>
+</body>
+</html>

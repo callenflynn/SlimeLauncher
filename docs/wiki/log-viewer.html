@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Real-time instance log tailing for crash triage">
+  <title>Log viewer - Slime Launcher</title>
+  
+  <style>:root { --brand-accent: #39ff14; }</style>
+  
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; }
+    html[data-theme="dark"] { background: #12151a; color: #d6dae0; }
+    html[data-theme="light"] { background: #ffffff; color: #1c2127; }
+    html[data-theme="dark"] a { color: var(--brand-accent); }
+    html[data-theme="light"] a { color: var(--brand-accent); }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 1.2rem; border-bottom: 1px solid rgba(128,128,128,.25); position: sticky; top: 0; backdrop-filter: blur(6px); }
+    .brand { font-weight: 700; text-decoration: none; color: inherit; }
+    .brand span { color: var(--brand-accent); }
+    .theme-btn { border: 1px solid rgba(128,128,128,.35); background: transparent; color: inherit; border-radius: 6px; padding: 0.25rem 0.6rem; cursor: pointer; }
+    .layout { display: flex; gap: 2rem; max-width: 75rem; margin: 0 auto; padding: 1.5rem 1.2rem; }
+    .nsdocs-nav { min-width: 13rem; }
+    .nsdocs-nav .nav-section { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin: 1rem 0 .3rem; }
+    .nsdocs-nav a { display: block; padding: .25rem .5rem; border-radius: 6px; text-decoration: none; }
+    .nsdocs-nav a.active { background: var(--brand-accent); color: #fff; }
+    html[data-theme="dark"] .nsdocs-nav a { color: #d6dae0; }
+    html[data-theme="light"] .nsdocs-nav a { color: #1c2127; }
+    html[data-theme="dark"] .nsdocs-nav a.active, html[data-theme="light"] .nsdocs-nav a.active { color: #fff; }
+    main { flex: 1; min-width: 0; }
+    pre { position: relative; background: rgba(128,128,128,.12); border-radius: 8px; padding: 1rem; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9em; }
+    p code, li code { background: rgba(128,128,128,.15); border-radius: 4px; padding: .1rem .3rem; }
+    .copy-btn { position: absolute; top: .4rem; right: .4rem; font-size: .72rem; border: 1px solid rgba(128,128,128,.4); background: rgba(128,128,128,.08); color: inherit; border-radius: 5px; padding: .15rem .5rem; cursor: pointer; opacity: .75; }
+    .copy-btn:hover { opacity: 1; }
+    .admonition { border-left: 4px solid var(--brand-accent); background: rgba(128,128,128,.08); border-radius: 0 8px 8px 0; padding: .6rem 1rem; margin: 1rem 0; }
+    .admonition-warning { border-left-color: #d29922; }
+    .admonition-title { font-weight: 700; margin: 0 0 .25rem; text-transform: capitalize; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid rgba(128,128,128,.3); padding: .45rem .7rem; text-align: left; }
+    th { background: rgba(128,128,128,.1); }
+    blockquote { border-left: 4px solid rgba(128,128,128,.4); margin: 1rem 0; padding: .2rem 1rem; }
+    footer { max-width: 75rem; margin: 0 auto; padding: 1rem 1.2rem 2rem; border-top: 1px solid rgba(128,128,128,.25); display: flex; justify-content: space-between; gap: 1rem; font-size: .85rem; opacity: .85; flex-wrap: wrap; }
+    @media (max-width: 48rem) { .layout { flex-direction: column; } .nsdocs-nav { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">SLIME<span> docs</span></a>
+    <button class="theme-btn" onclick="nsdocsToggleTheme()" title="Toggle theme">&#9789;</button>
+  </header>
+  <div class="layout">
+    <nav class="nsdocs-nav">
+<div class="nav-section">Getting started</div>
+<a href="index.html">Index</a>
+<a href="building.html">Building</a>
+<a href="installing-prism.html">Installing Prism</a>
+<div class="nav-section">Architecture</div>
+<a href="architecture.html">Architecture</a>
+<a href="compatibility-boundaries.html">Compatibility Boundaries</a>
+<a href="data-ownership.html">Data Ownership</a>
+<div class="nav-section">Using Slime Launcher</div>
+<a href="setup-wizard.html">Setup Wizard</a>
+<a href="controller-navigation.html">Controller Navigation</a>
+<a href="log-viewer.html" class="active">Log Viewer</a>
+<div class="nav-section">Maintenance</div>
+<a href="theming.html">Theming</a>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="wiki.html">Wiki</a>
+</nav>
+    <main>
+<h1 id="log-viewer">Log viewer</h1>
+<p>The log viewer streams an instance's game output in real time — for crash triage without leaving the ten-foot UI.</p>
+<h2 id="opening-it">Opening it</h2>
+<ul><li>Press <code>L</code>, or</li><li>Select a card and press <strong>Logs</strong> in the bottom strip.</li></ul>
+<p>The view stacks over the grid; <code>Escape</code> (or <strong>B</strong> / the <strong>Close</strong> button) returns to the dashboard.</p>
+<h2 id="what-it-shows">What it shows</h2>
+<p>Prism writes the game log at <code>&lt;instance&gt;/.minecraft/logs/latest.log</code> (legacy <code>1.log</code> and PolyMC-heritage <code>minecraft/</code> layouts are checked too). Slime tails whichever exists first.</p>
+<div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-text">[10:30:01] [main/INFO]: Loading Minecraft 1.21.4 with Fabric Loader 0.16.9
+[10:30:02] [Render thread/INFO]: OpenAL initialized on device OpenAL Soft
+...</code></pre></div>
+<h2 id="behavior">Behavior</h2>
+<table><thead><tr><th>Aspect</th><th>Detail</th></tr></thead><tbody><tr><td>Buffer</td><td>Last <strong>4000 lines</strong> (<code>QPlainTextEdit::maximumBlockCount</code>)</td></tr><tr><td>Follow mode</td><td>On by default — auto-scrolls to the newest line</td></tr><tr><td>Manual scroll-up</td><td>Pauses follow automatically; the button flips to <code>Follow: OFF</code></td></tr><tr><td>Rotation</td><td>Watched via <code>QFileSystemWatcher</code>; the new file is re-armed automatically</td></tr><tr><td>Missing file</td><td>Shows <code>Waiting for log file…</code> and retries (~20 s) before giving up with a status</td></tr><tr><td>Copy</td><td><strong>Copy</strong> button puts the visible buffer on the clipboard</td></tr></tbody></table>
+<p>The viewer is strictly <strong>read-only</strong> — there is no write path to the log from Slime.</p>
+<h2 id="crash-triage-recipe">Crash triage recipe</h2>
+<ol><li>Select the instance that crashed → <code>L</code>.</li><li>Scroll to the end; look for the last <code>[main/FATAL]</code> or stack frame lines.</li><li>Press <strong>Copy</strong> and paste into your issue tracker.</li><li><code>Escape</code> back; use <strong>Open Prism</strong> if you need to change Java args or mods (see <a href="compatibility-boundaries.html">Compatibility boundaries</a> for why that delegates to Prism).</li></ol>
+    </main>
+  </div>
+  <footer>
+    <span>Slime Launcher documentation. Prism Launcher remains the source of truth.</span>
+    <a class="edit-link" href="https://github.com/callenflynn/SlimeLauncher/edit/main/docs/wiki-src/log-viewer.md" target="_blank" rel="noopener">Edit on GitHub</a>
+  </footer>
+  <script>(function () {
+  var root = document.documentElement;
+  var stored = localStorage.getItem('nsdocs-theme');
+  var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  root.setAttribute('data-theme', theme);
+  window.nsdocsToggleTheme = function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('nsdocs-theme', next);
+  };
+})();</script>
+  <script>(function () {
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var code = btn.parentElement.querySelector('code');
+      if (!code) return;
+      navigator.clipboard.writeText(code.textContent).then(function () {
+        var old = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function () { btn.textContent = old; }, 1500);
+      });
+    });
+  });
+})();</script>
+</body>
+</html>

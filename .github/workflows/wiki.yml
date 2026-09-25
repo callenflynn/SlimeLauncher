@@ -1,0 +1,75 @@
+name: wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/wiki-src/**"
+      - "docs/wiki/**"
+      - "nsdocs.yml"
+      - ".github/workflows/wiki.yml"
+  pull_request:
+    paths:
+      - "docs/wiki-src/**"
+      - "docs/wiki/**"
+      - "nsdocs.yml"
+      - ".github/workflows/wiki.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: wiki-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Verify wiki freshness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nsdocs
+        run: python3 -m pip install --disable-pip-version-check pyyaml
+
+      - name: Rebuild check
+        run: |
+          python3 -m pip install --quiet \
+            "git+https://github.com/CStaks/nsdocs.git" || true
+          git clone --depth 1 https://github.com/CStaks/nsdocs.git /tmp/nsdocs
+          python3 /tmp/nsdocs/nsdocs.py --config nsdocs.yml --check
+
+  build:
+    name: Build wiki site
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build wiki
+        uses: CStaks/nsdocs@v1
+        with:
+          config: nsdocs.yml
+          check: false
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/wiki
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
