@@ -1,0 +1,33 @@
+/* Slime Launcher wiki overrides — loaded after nsdocs' inline styles via
+   `assets.css` in nsdocs.yml. Adds the slime-block logo to the header brand
+   and keeps the neon accent consistent with the app theme. */
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+/* Slime block logo, injected in front of the brand text. */
+.brand::before {
+  content: "";
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  background: url("slime.png") no-repeat center / contain;
+  image-rendering: auto;
+}
+
+/* Slightly sharpen the neon accent used by links and the active nav item. */
+html[data-theme="dark"] .nsdocs-nav a.active {
+  background: #39ff14;
+  color: #0a0a0a;
+}
+
+/* Constrain inline content images (the logo on the overview page). */
+main img[src$=".png"] {
+  max-width: 160px;
+  height: auto;
+  display: block;
+  margin: 0.5rem 0 1rem;
+}

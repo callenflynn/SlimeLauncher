@@ -6,8 +6,12 @@
 #include "ThemeManager.h"
 
 #include <QApplication>
+#include <QFile>
+#include <QFileInfo>
 #include <QFont>
+#include <QIcon>
 #include <QSettings>
+#include <QStandardPaths>
 
 namespace {
 
@@ -31,6 +35,22 @@ int main(int argc, char* argv[]) {
     QApplication::setApplicationName(QLatin1String(Constants::APP_ID));
     QApplication::setOrganizationName(QLatin1String(Constants::APP_ID));
     QApplication::setApplicationDisplayName(QLatin1String(Constants::APP_NAME));
+
+    // App icon: the slime block. Looked up from the freedesktop icon theme
+    // (installed by CMake into hicolor) with a repo-relative fallback so the
+    // binary also works uninstalled from a build tree or release tarball.
+    QIcon appIcon = QIcon::fromTheme(QLatin1String("slime-launcher"));
+    if (appIcon.isNull()) {
+        const QString localIcon = QCoreApplication::applicationDirPath()
+                                  + QLatin1String("/../share/icons/slime.png");
+        if (QFileInfo::exists(localIcon)) {
+            appIcon = QIcon(localIcon);
+        } else {
+            appIcon = QIcon(QLatin1String(":/icons/slime.png"));
+        }
+    }
+    QApplication::setWindowIcon(appIcon);
+
     QFont uiFont(QStringLiteral("Inter"));
     uiFont.setPointSize(10);
     QApplication::setFont(uiFont);

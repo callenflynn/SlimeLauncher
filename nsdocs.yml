@@ -9,9 +9,9 @@ repo:
   branch: "main"
 
 assets:
-  css: null
-  favicon_dark: null
-  favicon_light: null
+  css: "slime.css"
+  favicon_dark: "slime.png"
+  favicon_light: "slime.png"
 
 features:
   theme_toggle: true
@@ -21,7 +21,7 @@ features:
 
 nav:
   "Getting started":
-    - index.md
+    - overview.md
     - building.md
     - installing-prism.md
   "Architecture":

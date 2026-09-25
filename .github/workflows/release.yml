@@ -52,9 +52,14 @@ jobs:
 
       - name: Stage package tree
         run: |
-          mkdir -p pkg/slime-launcher-${GITHUB_REF_NAME}/bin
+          mkdir -p pkg/slime-launcher-${GITHUB_REF_NAME}/bin \
+                   pkg/slime-launcher-${GITHUB_REF_NAME}/share/icons
           install -m 755 build/bin/slime-launcher \
             pkg/slime-launcher-${GITHUB_REF_NAME}/bin/slime-launcher
+          install -m 644 assets/slime.png \
+            pkg/slime-launcher-${GITHUB_REF_NAME}/share/icons/slime.png
+          install -m 644 packaging/slime-launcher.desktop \
+            pkg/slime-launcher-${GITHUB_REF_NAME}/slime-launcher.desktop
 
       - name: Archive
         run: |

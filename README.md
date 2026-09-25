@@ -1,5 +1,7 @@
 # Slime Launcher
 
+<img src="assets/slime.png" alt="Slime Launcher logo — slime block" width="140" />
+
 A native C++20 / Qt 6 controller-navigable launcher frontend for **native (non-Flatpak) Prism Launcher** on Arch Linux. Console-style UI (Playnite / Xbox Big Picture inspired), high-contrast brutalist/minimalist aesthetic, tiny footprint.
 
 **Prism Launcher is the source of truth.** Slime Launcher reads Prism's instance metadata and routes all launches through Prism's CLI. It never mutates Prism data.

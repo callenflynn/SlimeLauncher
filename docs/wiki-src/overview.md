@@ -5,6 +5,8 @@ description: What Slime Launcher is and what it does
 
 # Slime Launcher
 
+![Slime Launcher logo — slime block](slime.png)
+
 Slime Launcher is a native **C++20 / Qt 6** controller-navigable frontend for [Prism Launcher](https://prismlauncher.org) on Linux. It renders your Prism instance library as a console-style grid — Playnite / Xbox Big Picture style — and routes every launch through Prism's own CLI.
 
 **Prism Launcher is the source of truth.** Slime Launcher reads Prism's metadata and spawns Prism's processes. It never mutates Prism's configuration; see [Compatibility boundaries](compatibility-boundaries.html).

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="QSS system, color tokens, and the object-name registry">
-  <title>Theming - Slime Launcher</title>
+  <meta name="description" content="What Slime Launcher is and what it does">
+  <title>Overview - Slime Launcher</title>
   <link rel="icon" href="slime.png" media="(prefers-color-scheme: light)">
     <link rel="icon" href="slime.png" media="(prefers-color-scheme: dark)">
   <style>:root { --brand-accent: #39ff14; }</style>
@@ -54,7 +54,7 @@
   <div class="layout">
     <nav class="nsdocs-nav">
 <div class="nav-section">Getting started</div>
-<a href="overview.html">Overview</a>
+<a href="overview.html" class="active">Overview</a>
 <a href="building.html">Building</a>
 <a href="installing-prism.html">Installing Prism</a>
 <div class="nav-section">Architecture</div>
@@ -66,31 +66,27 @@
 <a href="controller-navigation.html">Controller Navigation</a>
 <a href="log-viewer.html">Log Viewer</a>
 <div class="nav-section">Maintenance</div>
-<a href="theming.html" class="active">Theming</a>
+<a href="theming.html">Theming</a>
 <a href="troubleshooting.html">Troubleshooting</a>
 <a href="wiki.html">Wiki</a>
 </nav>
     <main>
-<h1 id="theming">Theming</h1>
-<p>All styling flows through <strong>one</strong> QSS string per theme, built by <code>ThemeManager::buildQss()</code> and applied globally via <code>qApp-&gt;setStyleSheet()</code>. Widgets contain no colors of their own (the only exceptions are the painted focus glow in <code>InstanceCard::paintEvent</code> and fixed swatch previews in the wizard).</p>
-<h2 id="color-tokens">Color tokens</h2>
-<table><thead><tr><th>Token</th><th>Dark</th><th>Light</th></tr></thead><tbody><tr><td><code>BG</code></td><td><code>#0a0a0a</code></td><td><code>#fafafa</code></td></tr><tr><td><code>SURFACE</code></td><td><code>#141414</code></td><td><code>#ffffff</code></td></tr><tr><td><code>SURFACE2</code></td><td><code>#1a1a1a</code></td><td><code>#f0f0f0</code></td></tr><tr><td><code>LINE</code></td><td><code>#262626</code></td><td><code>#d4d4d4</code></td></tr><tr><td><code>TEXT</code></td><td><code>#f2f2f2</code></td><td><code>#111111</code></td></tr><tr><td><code>MUTED</code></td><td><code>#8a8a8a</code></td><td><code>#666666</code></td></tr><tr><td><code>ACCENT</code></td><td><code>#39ff14</code></td><td><code>#2ea80a</code></td></tr><tr><td>Danger</td><td><code>#8b0000</code></td><td><code>#8b0000</code></td></tr></tbody></table>
-<p>Design rules:</p>
-<ul><li>Flat surfaces, <strong>hard edges</strong> — no <code>border-radius</code> on primary surfaces (brutalist aesthetic)</li><li>Accent is used sparingly: focus rings, primary CTA, <code>NOW PLAYING</code> badge</li><li>1px hairlines separate regions; panels alternate <code>BG</code> / <code>SURFACE</code> for depth</li></ul>
-<h2 id="object-name-registry">Object-name registry</h2>
-<p>QSS keys on <code>setObjectName</code>, not class names. These names are a stable contract — renaming a widget requires updating <code>ThemeManager</code> and <code>src/Constants.h</code>:</p>
-<table><thead><tr><th>Object name</th><th>Used by</th></tr></thead><tbody><tr><td><code>InstanceCard</code></td><td>Grid tile frame</td></tr><tr><td><code>HeroCard</code></td><td>Double-size featured tile</td></tr><tr><td><code>SlimeButton</code></td><td>Base button styling</td></tr><tr><td><code>PrimaryButton</code></td><td>Neon accent CTA (Play, Validate, Retry)</td></tr><tr><td><code>DangerButton</code></td><td>Destructive actions</td></tr><tr><td><code>SideNav</code></td><td>Left navigation rail</td></tr><tr><td><code>LogView</code></td><td>Log <code>QPlainTextEdit</code> (monospace)</td></tr><tr><td><code>StatusChip</code></td><td>Loader chips and account chip</td></tr></tbody></table>
-<h2 id="state-styling">State styling</h2>
-<ul><li><strong>Hover</strong> — CSS <code>:hover</code></li><li><strong>Selection</strong> — dynamic property: <code>QFrame#InstanceCard[selected=&quot;true&quot;]</code> → 3px accent ring + painted glow</li><li><strong>Playing</strong> — dynamic property <code>playing</code> drives the <code>NOW PLAYING</code> badge</li><li><strong>Focus</strong> — <code>:focus</code> → 3px accent border on buttons and inputs</li></ul>
-<h2 id="adding-a-theme">Adding a theme</h2>
-<ol><li>Add the color set to the <code>buildQss()</code> branch in <code>src/ThemeManager.cpp</code>.</li><li>Extend <code>ThemeManager::Theme</code> and the persistence mapping in <code>setTheme()</code>/<code>main.cpp</code>.</li><li>Add a swatch button on the wizard's theme page.</li></ol>
-<h2 id="persistence">Persistence</h2>
-<p>The chosen theme is written to <code>slime.conf</code> (<code>General/Theme=dark|light</code>) when the wizard finishes. It is re-applied on every startup before the dashboard shows.</p>
+<h1 id="slime-launcher">Slime Launcher</h1>
+<p><img src="slime.png" alt="Slime Launcher logo — slime block"></p>
+<p>Slime Launcher is a native <strong>C++20 / Qt 6</strong> controller-navigable frontend for <a href="https://prismlauncher.org">Prism Launcher</a> on Linux. It renders your Prism instance library as a console-style grid — Playnite / Xbox Big Picture style — and routes every launch through Prism's own CLI.</p>
+<p><strong>Prism Launcher is the source of truth.</strong> Slime Launcher reads Prism's metadata and spawns Prism's processes. It never mutates Prism's configuration; see <a href="compatibility-boundaries.html">Compatibility boundaries</a>.</p>
+<p>!!! note Slime Launcher targets <strong>native (non-Flatpak) Prism Launcher</strong> installations. Flatpak is explicitly unsupported — see <a href="installing-prism.html">Installing Prism</a>.</p>
+<h2 id="features">Features</h2>
+<ul><li><strong>Dashboard grid</strong> — instance cards with loader chips (Fabric / Forge / NeoForge / Quilt / Vanilla), game version flags, last-played times, and a live <code>NOW PLAYING</code> state.</li><li><strong>Hero card</strong> — the most recently played instance is pinned at double size.</li><li><strong>Controller navigation</strong> — gamepad-to-focus mapping that shares one focus model with keyboard and mouse.</li><li><strong>Live log viewer</strong> — real-time tail of the selected instance's <code>latest.log</code> with follow mode.</li><li><strong>Setup wizard</strong> — first-run theme selection, automatic Prism path detection with Flatpak rejection, and a read-only account overview.</li><li><strong>Fallback safety</strong> — every advanced operation delegates to the native Prism UI via a dedicated button.</li></ul>
+<h2 id="at-a-glance">At a glance</h2>
+<table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Language</td><td>C++20</td></tr><tr><td>UI framework</td><td>Qt 6 Widgets (no QML)</td></tr><tr><td>Build system</td><td>CMake ≥ 3.22 + Ninja</td></tr><tr><td>Target platform</td><td>Arch Linux (native packages)</td></tr><tr><td>Prism compatibility</td><td>v9.0+</td></tr><tr><td>Memory model</td><td>RAII / Qt parent-child ownership</td></tr></tbody></table>
+<h2 id="documentation-map">Documentation map</h2>
+<ul><li><strong>Getting started</strong> — building from source, installing Prism natively.</li><li><strong>Architecture</strong> — module map, compatibility boundaries, data ownership.</li><li><strong>Using Slime Launcher</strong> — the setup wizard, controller navigation, log viewer.</li><li><strong>Maintenance</strong> — theming, troubleshooting, editing this wiki.</li></ul>
     </main>
   </div>
   <footer>
     <span>Slime Launcher documentation. Prism Launcher remains the source of truth.</span>
-    <a class="edit-link" href="https://github.com/callenflynn/SlimeLauncher/edit/main/docs/wiki-src/theming.md" target="_blank" rel="noopener">Edit on GitHub</a>
+    <a class="edit-link" href="https://github.com/callenflynn/SlimeLauncher/edit/main/docs/wiki-src/overview.md" target="_blank" rel="noopener">Edit on GitHub</a>
   </footer>
   <script>(function () {
   var root = document.documentElement;
