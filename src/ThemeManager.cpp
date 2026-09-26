@@ -67,6 +67,13 @@ void ThemeManager::persist(const QString& binaryPath, const QString& instancesDi
     m_settings->sync();
 }
 
+void ThemeManager::persistTheme(Theme theme) {
+    m_theme = theme;
+    m_settings->setValue(QStringLiteral("General/Theme"),
+                         theme == Theme::Dark ? QStringLiteral("dark") : QStringLiteral("light"));
+    m_settings->sync();
+}
+
 QString ThemeManager::buildQss(Theme theme) {
     const bool dark = (theme == Theme::Dark);
     const QString bg = dark ? QLatin1String(BG_DARK) : QLatin1String(BG_LIGHT);
@@ -120,6 +127,13 @@ QString ThemeManager::buildQss(Theme theme) {
                " padding: 7px 16px; }"
                "QLineEdit#SearchField:focus { border: 2px solid %5; padding: 6px 15px; }")
                .arg(barBg, line, surface, line, accent);
+
+    // Account chip: pill with hairline border, floating over the glass bar.
+    qss += QStringLiteral(
+               "QLabel#StatusChip { background: rgba(26, 26, 36, 0.55); color: %2;"
+               " border: 1px solid %3; border-radius: 12px; padding: 4px 14px;"
+               " font-size: 12px; font-weight: 600; }")
+               .arg(bg, text, line);
 
     // Cards are fully painter-drawn; QSS only keeps their backgrounds clear.
     qss += QStringLiteral(

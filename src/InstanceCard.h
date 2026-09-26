@@ -31,6 +31,11 @@ public:
     void setSelected(bool selected);
     bool isSelected() const { return m_selected; }
 
+    // Opens the Play / Artwork / Logs / Edit menu at a global position.
+    // Used by the card's own context-menu event and by the dashboard when
+    // the gamepad X button requests options for the selected card.
+    void showContextMenu(const QPoint& globalPos);
+
     QSize sizeHint() const override { return QSize(Constants::CARD_WIDTH, Constants::CARD_HEIGHT); }
 
 signals:
@@ -57,7 +62,6 @@ private:
     QRectF cardRect() const;
     void loadArtwork();
     void updateHover(const QPoint& pos);
-    void showContextMenu(const QPoint& globalPos);
     int hitAction(const QPoint& localPos) const;  // -1 none, 0 play, 1 artwork, 2 edit, 3 logs
 
     InstanceCardModel m_info;

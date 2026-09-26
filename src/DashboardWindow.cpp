@@ -1,4 +1,5 @@
 #include "DashboardWindow.h"
+#include "ControllerLegend.h"
 #include "ErrorPanel.h"
 #include "ImageProcessor.h"
 
@@ -7,7 +8,6 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QLabel>
-#include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QScrollArea>
@@ -16,8 +16,8 @@
 #include <QTimer>
 #include <QVBoxLayout>
 
-DashboardWindow::DashboardWindow(PrismBridge* bridge, QWidget* parent)
-    : QMainWindow(parent), m_bridge(bridge) {
+DashboardWindow::DashboardWindow(PrismBridge* bridge, ThemeManager* themes, QWidget* parent)
+    : QMainWindow(parent), m_bridge(bridge), m_themes(themes) {
     setWindowTitle(QLatin1String(Constants::APP_NAME));
     resize(Constants::DEFAULT_WIN_SIZE);
     setMinimumSize(Constants::MIN_WIN_SIZE);
@@ -39,51 +39,43 @@ void DashboardWindow::buildUi() {
     rootLayout->setContentsMargins(0, 0, 0, 0);
     rootLayout->setSpacing(0);
 
-    // ---- Top bar (glass) ----------------------------------------------------
+    // ---- Top bar: wordmark · account · clock ---------------------------------
     auto* topBar = new QWidget(central);
     topBar->setObjectName(QLatin1String(Constants::OBJ_TOP_BAR));
     auto* topLayout = new QHBoxLayout(topBar);
-    topLayout->setContentsMargins(22, 14, 22, 14);
+    topLayout->setContentsMargins(24, 14, 24, 14);
 
     m_title = new QLabel(QString::fromUtf8(Constants::APP_NAME).toUpper(), topBar);
     m_title->setStyleSheet(QStringLiteral(
-        "font-weight: 800; font-size: 15px; letter-spacing: 4px; color: %1;")
-        .arg(QLatin1String("#00f0ff")));
+        "font-weight: 800; font-size: 15px; letter-spacing: 4px; color: #00f0ff;"));
 
-    m_search = new QLineEdit(topBar);
-    m_search->setObjectName(QLatin1String(Constants::OBJ_SEARCH));
-    m_search->setPlaceholderText(QLatin1String("Filter games…"));
-    m_search->setFixedWidth(300);
-    m_search->setClearButtonEnabled(true);
-    connect(m_search, &QLineEdit::textChanged, this, &DashboardWindow::applyFilter);
+    m_account = new QLabel(topBar);
+    m_account->setAlignment(Qt::AlignCenter);
+    m_account->setObjectName(QLatin1String(Constants::OBJ_STATUS_CHIP));
 
     m_clock = new QLabel(topBar);
     m_clock->setStyleSheet(
-        QStringLiteral("color: %1; font-size: 12px; font-weight: 600;")
-            .arg(QLatin1String("#9a9eb0")));
+        QStringLiteral("color: #9a9eb0; font-size: 12px; font-weight: 600;"));
 
     topLayout->addWidget(m_title);
     topLayout->addStretch(1);
-    topLayout->addWidget(m_search);
-    topLayout->addSpacing(18);
+    topLayout->addWidget(m_account);
+    topLayout->addStretch(1);
     topLayout->addWidget(m_clock);
 
-    // ---- Middle: SideNav + grid stack ---------------------------------------
-    auto* middle = new QWidget(central);
-    auto* middleLayout = new QHBoxLayout(middle);
-    middleLayout->setContentsMargins(0, 0, 0, 0);
-    middleLayout->setSpacing(0);
+    // ---- Content: hero backdrop under a stacked center ------------------------
+    auto* center = new QWidget(central);
+    auto* centerLayout = new QVBoxLayout(center);
+    centerLayout->setContentsMargins(0, 0, 0, 0);
+    centerLayout->setSpacing(0);
 
-    m_sideNav = new SideNav(m_bridge, middle);
-    connect(m_sideNav, &SideNav::refreshRequested, this, &DashboardWindow::refreshInstances);
-    connect(m_sideNav, &SideNav::openPrismRequested, this, &DashboardWindow::openPrism);
-    connect(m_sideNav, &SideNav::allRequested, this, [this]() {
-        m_search->clear();
-    });
+    m_backdrop = new HeroBackdrop(center);
 
-    m_stack = new QStackedWidget(middle);
+    m_stack = new QStackedWidget(center);
+    m_stack->setAttribute(Qt::WA_StyledBackground, false);
+    m_stack->setStyleSheet(QStringLiteral("background: transparent;"));
 
-    // Grid page
+    // Library page: the poster grid over the backdrop.
     auto* gridPage = new QWidget(m_stack);
     auto* gridLayout = new QVBoxLayout(gridPage);
     gridLayout->setContentsMargins(0, 0, 0, 0);
@@ -105,11 +97,23 @@ void DashboardWindow::buildUi() {
     m_emptyLabel = new QLabel(QLatin1String(Constants::MSG_EMPTY_GRID), gridPage);
     m_emptyLabel->setAlignment(Qt::AlignCenter);
     m_emptyLabel->setStyleSheet(
-        QStringLiteral("color: %1; font-size: 15px;").arg(QLatin1String("#9a9eb0")));
+        QStringLiteral("color: #9a9eb0; font-size: 15px;"));
 
     gridLayout->addWidget(m_scroll, 1);
     gridLayout->addWidget(m_emptyLabel, 1);
-    m_stack->addWidget(gridPage);
+    m_stack->addWidget(gridPage);   // index 0 — Library
+
+    // Settings page
+    m_settings = new SettingsView(m_bridge, m_themes, m_stack);
+    connect(m_settings, &SettingsView::openPrismRequested, this, &DashboardWindow::openPrism);
+    connect(m_settings, &SettingsView::refreshRequested, this, &DashboardWindow::refreshInstances);
+    connect(m_settings, &SettingsView::themeToggled, this, [this](ThemeManager::Theme theme) {
+        // Persist only once paths are known (wizard owns first-run writes).
+        if (m_themes) {
+            m_themes->persistTheme(theme);
+        }
+    });
+    m_stack->addWidget(m_settings);  // index 1 — Settings
 
     // Log page
     m_logViewer = new LogViewer(m_bridge, m_stack);
@@ -117,7 +121,7 @@ void DashboardWindow::buildUi() {
         m_stack->setCurrentIndex(0);
         m_logViewer->detach();
     });
-    m_stack->addWidget(m_logViewer);
+    m_stack->addWidget(m_logViewer);  // index 2 — Logs
 
     // Error page
     m_errorPanel = new ErrorPanel(m_stack);
@@ -126,43 +130,46 @@ void DashboardWindow::buildUi() {
         refreshInstances();
     });
     connect(m_errorPanel, &ErrorPanel::openPrismRequested, this, &DashboardWindow::openPrism);
-    m_stack->addWidget(m_errorPanel);
+    m_stack->addWidget(m_errorPanel);  // index 3 — Error
 
-    middleLayout->addWidget(m_sideNav);
-    middleLayout->addWidget(m_stack, 1);
+    centerLayout->addWidget(m_stack, 1);
 
-    // ---- Bottom control strip (glass) ----------------------------------------
+    // ---- Console footer: detail line + controller legend ----------------------
     auto* bottom = new QWidget(central);
     bottom->setObjectName(QLatin1String(Constants::OBJ_BOTTOM_BAR));
     auto* bottomLayout = new QHBoxLayout(bottom);
-    bottomLayout->setContentsMargins(22, 12, 22, 12);
+    bottomLayout->setContentsMargins(24, 10, 24, 10);
 
     m_detailLabel = new QLabel(QLatin1String(Constants::MSG_NOTHING_SELECTED), bottom);
     m_detailLabel->setStyleSheet(
-        QStringLiteral("color: %1; font-size: 12px;").arg(QLatin1String("#9a9eb0")));
+        QStringLiteral("color: #9a9eb0; font-size: 12px;"));
 
-    m_playButton = new QPushButton(QLatin1String("▶  Play"), bottom);
+    m_playButton = new QPushButton(QLatin1String(Constants::MSG_CONTEXT_PLAY), bottom);
     m_playButton->setObjectName(QLatin1String(Constants::OBJ_PRIMARY_BUTTON));
     m_playButton->setEnabled(false);
-    m_logsButton = new QPushButton(QLatin1String("Logs"), bottom);
-    m_logsButton->setEnabled(false);
-    m_prismButton = new QPushButton(QLatin1String("Open Prism"), bottom);
-    m_prismButton->setObjectName(QLatin1String(Constants::OBJ_BUTTON));
+
+    m_legend = new ControllerLegend(bottom);
 
     bottomLayout->addWidget(m_detailLabel, 1);
     bottomLayout->addWidget(m_playButton);
-    bottomLayout->addWidget(m_logsButton);
-    bottomLayout->addWidget(m_prismButton);
+    bottomLayout->addSpacing(16);
+    bottomLayout->addWidget(m_legend);
 
     connect(m_playButton, &QPushButton::clicked, this, &DashboardWindow::playSelected);
-    connect(m_logsButton, &QPushButton::clicked, this, &DashboardWindow::openLogs);
-    connect(m_prismButton, &QPushButton::clicked, this, &DashboardWindow::openPrism);
+
+    // ---- Search overlay (modal, on demand) ------------------------------------
+    m_searchOverlay = new SearchOverlay(central);
+    connect(m_searchOverlay, &SearchOverlay::filterChanged, this, [this](const QString& text) {
+        m_filterText = text;
+        applyFilter(text);
+    });
 
     rootLayout->addWidget(topBar);
-    rootLayout->addWidget(middle, 1);
+    rootLayout->addWidget(center, 1);
     rootLayout->addWidget(bottom);
 
     setCentralWidget(central);
+    updateAccountChip();
 }
 
 void DashboardWindow::refreshInstances() {
@@ -172,13 +179,16 @@ void DashboardWindow::refreshInstances() {
         showError(error, QString());
         return;
     }
-    m_stack->setCurrentIndex(0);
+    if (m_stack->currentIndex() == 3) {
+        m_stack->setCurrentIndex(0);
+    }
     rebuildGrid(m_instances);
+    updateAccountChip();
 }
 
 void DashboardWindow::showError(const QString& error, const QString& detail) {
     m_errorPanel->showError(error, detail);
-    m_stack->setCurrentIndex(2);
+    m_stack->setCurrentIndex(3);
 }
 
 void DashboardWindow::rebuildGrid(const QVector<InstanceCardModel>& instances) {
@@ -193,11 +203,7 @@ void DashboardWindow::rebuildGrid(const QVector<InstanceCardModel>& instances) {
         return;
     }
 
-    int columns = qBound(Constants::CARD_COLUMNS_MIN,
-                         qMax(1, (width() - 2 * Constants::GRID_MARGIN + Constants::GRID_SPACING) /
-                                     (Constants::CARD_WIDTH + Constants::GRID_SPACING)),
-                         Constants::CARD_COLUMNS_MAX);
-
+    const int columns = gridColumns();
     int row = 0;
     int col = 0;
     for (const InstanceCardModel& info : instances) {
@@ -207,11 +213,8 @@ void DashboardWindow::rebuildGrid(const QVector<InstanceCardModel>& instances) {
             setSelectedInstance(target);
             playSelected();
         });
-        connect(card, &InstanceCard::editRequested, this, [this](const InstanceCardModel& target) {
-            const OpResult result = m_bridge->openPrismUi();
-            if (!result.ok) {
-                showError(result.error, QString());
-            }
+        connect(card, &InstanceCard::editRequested, this, [this](const InstanceCardModel&) {
+            openPrism();
         });
         connect(card, &InstanceCard::artworkChangeRequested, this,
                 &DashboardWindow::changeArtworkFor);
@@ -226,6 +229,11 @@ void DashboardWindow::rebuildGrid(const QVector<InstanceCardModel>& instances) {
             col = 0;
             ++row;
         }
+    }
+
+    // Re-apply the active filter after a rescan.
+    if (!m_filterText.isEmpty()) {
+        applyFilter(m_filterText);
     }
 
     // Select the most recently played card by default for instant gamepad play.
@@ -271,21 +279,42 @@ void DashboardWindow::setSelectedInstance(const InstanceCardModel& info) {
         card->setSelected(card->info().id == info.id);
     }
     updateDetailPanel();
+    updateHeroBackdrop();
+}
+
+void DashboardWindow::updateHeroBackdrop() {
+    if (!m_backdrop) {
+        return;
+    }
+    const QImage backdrop = m_hasSelection
+        ? ImageProcessor::heroBackdropImage(m_bridge->instancesDir(), m_selected.id, size())
+        : QImage();
+    m_backdrop->transitionTo(backdrop);
 }
 
 void DashboardWindow::updateDetailPanel() {
     if (!m_hasSelection) {
         m_detailLabel->setText(QLatin1String(Constants::MSG_NOTHING_SELECTED));
         m_playButton->setEnabled(false);
-        m_logsButton->setEnabled(false);
         return;
     }
-    m_detailLabel->setText(QStringLiteral("%1  •  %2  •  %3").arg(
+    m_detailLabel->setText(QStringLiteral("%1  ·  %2  ·  %3").arg(
         m_selected.name, m_selected.loader, m_selected.gameVersion.isEmpty()
                               ? QStringLiteral("version unknown")
                               : QStringLiteral("MC %1").arg(m_selected.gameVersion)));
     m_playButton->setEnabled(true);
-    m_logsButton->setEnabled(true);
+}
+
+void DashboardWindow::updateAccountChip() {
+    const QVector<AccountInfo> accounts = m_bridge->readAccounts();
+    if (accounts.isEmpty()) {
+        m_account->setText(QLatin1String(Constants::MSG_ACCOUNT_NONE));
+        return;
+    }
+    const AccountInfo& active = accounts.first();
+    m_account->setText(active.active
+                           ? QString::fromUtf8(Constants::MSG_ACCOUNT_IN).arg(active.name)
+                           : QString::fromUtf8(Constants::MSG_ACCOUNT_OFF).arg(active.name));
 }
 
 void DashboardWindow::playSelected() {
@@ -307,7 +336,7 @@ void DashboardWindow::openLogs() {
         return;
     }
     m_logViewer->attachToInstance(m_selected.id);
-    m_stack->setCurrentIndex(1);
+    m_stack->setCurrentIndex(2);
 }
 
 void DashboardWindow::openPrism() {
@@ -334,8 +363,46 @@ void DashboardWindow::changeArtworkFor(const InstanceCardModel& info) {
     refreshInstances();
 }
 
+void DashboardWindow::showOptionsForSelected() {
+    if (!m_hasSelection) {
+        return;
+    }
+    if (InstanceCard* card = cardForId(m_selected.id)) {
+        card->showContextMenu(QCursor::pos());
+    }
+}
+
 void DashboardWindow::updateClock() {
     m_clock->setText(QTime::currentTime().toString(QStringLiteral("HH:mm")));
+}
+
+void DashboardWindow::cycleView(int direction) {
+    // Library ↔ Settings; Logs and Error are contextual, not cycled.
+    const View current =
+        (m_stack->widget(1) == m_stack->currentWidget()) ? View::Settings : View::Library;
+    if (direction >= 0 && current == View::Library) {
+        setView(View::Settings);
+    } else if (direction < 0 && current == View::Settings) {
+        setView(View::Library);
+    }
+}
+
+void DashboardWindow::setView(View view) {
+    if (view == View::Settings) {
+        m_settings->refreshAccountChip();
+        m_stack->setCurrentIndex(1);
+    } else {
+        m_stack->setCurrentIndex(0);
+        if (!m_cards.isEmpty()) {
+            InstanceCard* card = cardForId(m_selected.id);
+            if (!card && !m_cards.isEmpty()) {
+                card = m_cards.first();
+            }
+            if (card) {
+                card->setFocus();
+            }
+        }
+    }
 }
 
 void DashboardWindow::keyPressEvent(QKeyEvent* event) {
@@ -344,7 +411,8 @@ void DashboardWindow::keyPressEvent(QKeyEvent* event) {
     // Grid spatial navigation — shared by arrows, D-pad and left stick
     // (GamepadFilter synthesizes arrow keys for those).
     if (key == Qt::Key_Left || key == Qt::Key_Right || key == Qt::Key_Up || key == Qt::Key_Down) {
-        if (m_stack->currentIndex() == 0 && !m_cards.isEmpty() && !m_search->hasFocus()) {
+        if (m_stack->currentIndex() == 0 && !m_cards.isEmpty() &&
+            !m_searchOverlay->isSearching()) {
             moveGridFocus(key);
             event->accept();
             return;
@@ -357,24 +425,46 @@ void DashboardWindow::keyPressEvent(QKeyEvent* event) {
             event->accept();
             return;
         case Qt::Key_Escape:
-            if (m_stack->currentIndex() != 0) {
+            if (m_stack->currentIndex() == 2) {
                 m_stack->setCurrentIndex(0);
                 m_logViewer->detach();
                 event->accept();
                 return;
             }
-            if (!m_search->text().isEmpty()) {
-                m_search->clear();
+            if (m_stack->currentIndex() == 1) {
+                setView(View::Library);
+                event->accept();
+                return;
+            }
+            if (!m_filterText.isEmpty()) {
+                m_filterText.clear();
+                applyFilter(m_filterText);
                 event->accept();
                 return;
             }
             break;
+        case Qt::Key_E:  // Options — mirrors gamepad X
+            showOptionsForSelected();
+            event->accept();
+            return;
+        case Qt::Key_F:  // Search — mirrors gamepad Y
+            m_searchOverlay->open(m_filterText);
+            event->accept();
+            return;
+        case Qt::Key_O:  // Open Prism — mirrors gamepad Start/Menu
+            openPrism();
+            event->accept();
+            return;
         case Qt::Key_L:
             openLogs();
             event->accept();
             return;
-        case Qt::Key_O:
-            openPrism();
+        case Qt::Key_BracketLeft:  // LB fallback on keyboard
+            cycleView(-1);
+            event->accept();
+            return;
+        case Qt::Key_BracketRight:  // RB fallback on keyboard
+            cycleView(1);
             event->accept();
             return;
         case Qt::Key_Return:
@@ -430,7 +520,7 @@ void DashboardWindow::moveGridFocus(int key) {
 }
 
 int DashboardWindow::gridColumns() const {
-    const int available = width() - m_sideNav->width() - 2 * Constants::GRID_MARGIN;
+    const int available = width() - 2 * Constants::GRID_MARGIN;
     return qBound(Constants::CARD_COLUMNS_MIN,
                   qMax(1, (available + Constants::GRID_SPACING) /
                               (Constants::CARD_WIDTH + Constants::GRID_SPACING)),
@@ -442,5 +532,8 @@ void DashboardWindow::resizeEvent(QResizeEvent* event) {
     // Re-flow the grid to the new column count; cards keep their own size.
     if (!m_instances.isEmpty()) {
         rebuildGrid(m_instances);
+    }
+    if (!m_selected.id.isEmpty()) {
+        updateHeroBackdrop();
     }
 }

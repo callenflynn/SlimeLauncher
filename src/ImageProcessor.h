@@ -63,6 +63,13 @@ public:
     // rescans: seeded from the instance id so cards do not reshuffle).
     static int defaultCardIndex(const QString& instanceId);
 
+    // Full-screen backdrop for the dashboard: the instance's
+    // slimelauncher/background.png when present, otherwise a blurred,
+    // darkened derivative of its card.png (or the deterministic default
+    // card). Returns a null image when nothing can be produced.
+    static QImage heroBackdropImage(const QString& instancesDir, const QString& instanceId,
+                                    const QSize& targetSize);
+
 private:
     // Picks, crops and returns one of the embedded default posters.
     static QImage buildDefaultCard(const QString& instanceId);

@@ -55,6 +55,13 @@ Warnings are treated as errors (`-Werror`) in CI-style builds; local builds allo
 - Header-only small helpers are allowed; larger implementations go in `.cpp` files.
 - Keep widget classes focused: one widget per file, named for the widget.
 
+## Console Layout Rules
+- The shell is console-first: **no left sidebar**, no persistent search field, no desktop-style button rows. Navigation surfaces are (1) the poster grid, (2) a stacked Settings page, (3) a modal Search overlay, (4) a contextual Logs page.
+- The top bar carries only the wordmark, the active-account chip, and the clock. Search lives behind Y / `F` as an overlay.
+- The footer is a vector-painted controller legend (`[A] Play  [X] Options  [Y] Search  [LB/RB] Views  [MENU] Open Prism`) plus the detail line. All badges are `QPainter` primitives — **never use Unicode glyph strings for icons** (font-dependent rendering caused mojibake bugs).
+- `HeroBackdrop` cross-fades a per-instance wallpaper behind the grid: `slimelauncher/background.png` when present, else a blurred/darkened derivative of the card art (see `ImageProcessor::heroBackdropImage`).
+- Gamepad mapping lives in `GamepadFilter`: A=play, B=back, X=options, Y=search, LB/RB=view cycle, Back=back, Start/Menu=open Prism. Semantic actions are emitted as Qt signals; keys posted to the focus widget mirror them (E/F/O) for keyboard parity.
+
 ## QSS Styling Rules
 - All styling flows from `ThemeManager`, which compiles one QSS string per theme (`SlimeDark` / `SlimeLight`).
 - Colors are defined as hex literals in `ThemeManager.cpp` — never hardcode colors in widgets. Painter-drawn surfaces use the `Constants::COLOR_*` tokens, which mirror the QSS values; keep the two in sync.
@@ -78,7 +85,7 @@ Warnings are treated as errors (`-Werror`) in CI-style builds; local builds allo
 ## State Management Lifecycle Rules
 1. **Prism is source of truth.** On every dashboard refresh (`F5`), `PrismBridge::scanInstances()` re-reads instance JSON/INI from disk and rebuilds the model. The UI never caches beyond a single refresh cycle. The same pass provisions `slimelauncher/` assets via `ImageProcessor::ensureAssets` (create folder, seed default poster if `card.png` is absent).
 2. **Slime config** (`~/.config/SlimeLauncher/slime.conf`) stores theme + validated Prism paths. Written only through `ThemeManager`/`SetupWizard` completion.
-3. **Accounts are read-only** to Slime: `accounts.json` is parsed for display only; sign-in flows delegate to Prism.
+3. **Accounts are read-only** to Slime: `accounts.json` is parsed for display only; sign-in flows delegate to Prism. The parser (`PrismBridge::parseAccountsDocument`) understands the modern Prism 9 object root (`accounts[]` with nested `profile.name`, `active`, `entitlement.ownsMinecraft`) and legacy bare-array files. Resolution order: `$XDG_DATA_HOME/PrismLauncher/accounts.json` → `~/.local/share/PrismLauncher/accounts.json` → the configured data root. The active account sorts first and surfaces as "Logged in as <name>".
 4. A wizard must be completed before the dashboard shows. `SetupWizard` completes only when a valid non-Flatpak Prism binary + instance dir is confirmed.
 5. On refresh, cards that disappear from disk are dropped from the model; new ones are appended in name-sorted order.
 6. Gamepad input never mutates state directly — it emits focus-move/select requests that route through the same handlers as keyboard/mouse. Arrow/D-pad navigation over the poster grid is column-aware (bounded moves at row edges).

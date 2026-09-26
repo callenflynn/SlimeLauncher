@@ -9,6 +9,7 @@
 #include <QImageReader>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QPainter>
 #include <QtEndian>
 
 namespace {
@@ -27,6 +28,66 @@ QImage loadImage(const QString& path) {
     QImageReader reader(path);
     reader.setAutoTransform(true);
     return reader.read();
+}
+
+// Cheap stack-blur approximation: repeated box blurs converge on a Gaussian
+// and avoid a QImageConvolutionMatrix dependency.
+QImage boxBlur(QImage src, int radius) {
+    radius = qBound(1, radius, 32);
+    QImage src2 = src.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    QImage dst(src2.size(), QImage::Format_ARGB32_Premultiplied);
+    for (int pass = 0; pass < 3; ++pass) {
+        // Horizontal pass
+        for (int y = 0; y < src2.height(); ++y) {
+            const QRgb* in = reinterpret_cast<const QRgb*>(src2.constScanLine(y));
+            QRgb* out = reinterpret_cast<QRgb*>(dst.scanLine(y));
+            int r = 0, g = 0, b = 0;
+            const int win = radius * 2 + 1;
+            for (int x = -radius; x <= radius && x < src2.width(); ++x) {
+                const QRgb px = in[qBound(0, x, src2.width() - 1)];
+                r += qRed(px); g += qGreen(px); b += qBlue(px);
+            }
+            for (int x = 0; x < src2.width(); ++x) {
+                const int addIdx = qMin(src2.width() - 1, x + radius + 1);
+                const int subIdx = qMax(0, x - radius);
+                const QRgb add = in[addIdx];
+                const QRgb sub = in[subIdx];
+                r += qRed(add) - qRed(sub);
+                g += qGreen(add) - qGreen(sub);
+                b += qBlue(add) - qBlue(sub);
+                out[x] = qRgb(r / win, g / win, b / win);
+            }
+        }
+        // Vertical pass
+        QImage tmp = dst;
+        for (int y = 0; y < tmp.height(); ++y) {
+            QRgb* out = reinterpret_cast<QRgb*>(dst.scanLine(y));
+            for (int x = 0; x < tmp.width(); ++x) {
+                int r = 0, g = 0, b = 0;
+                for (int dy = -radius; dy <= radius; ++dy) {
+                    const int yy = qBound(0, y + dy, tmp.height() - 1);
+                    const QRgb px = reinterpret_cast<const QRgb*>(tmp.constScanLine(yy))[x];
+                    r += qRed(px); g += qGreen(px); b += qBlue(px);
+                }
+                const int win = radius * 2 + 1;
+                out[x] = qRgb(r / win, g / win, b / win);
+            }
+        }
+    }
+    return dst;
+}
+
+QImage applyBlur(const QImage& source, qreal radius) {
+    return boxBlur(source, int(radius));
+}
+
+QImage applyScrim(const QImage& source, qreal opacity) {
+    QImage out = source.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    QPainter p(&out);
+    p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    p.fillRect(out.rect(), QColor(10, 10, 14, int(255 * qBound(0.0, opacity, 1.0))));
+    p.end();
+    return out;
 }
 
 }  // namespace
@@ -201,6 +262,46 @@ bool ImageProcessor::saveCardImage(const QString& instancesDir, const QString& i
         return false;
     }
     return true;
+}
+
+QImage ImageProcessor::heroBackdropImage(const QString& instancesDir, const QString& instanceId,
+                                         const QSize& targetSize) {
+    if (instancesDir.isEmpty() || instanceId.isEmpty()) {
+        return {};
+    }
+
+    // 1. Explicit hero wallpaper ships unblurred.
+    const QImage background = loadImage(backgroundPath(instancesDir, instanceId));
+    if (!background.isNull()) {
+        return background;
+    }
+
+    // 2. Derive from card artwork: blur + darken so the poster grid and UI
+    //    text stay legible over it.
+    QImage card = loadImage(cardPath(instancesDir, instanceId));
+    if (card.isNull()) {
+        const int index = defaultCardIndex(instanceId);
+        if (index >= 0 && index < Constants::DEFAULT_CARD_COUNT) {
+            card = loadImage(QLatin1String(Constants::DEFAULT_CARDS[index]));
+        }
+    }
+    if (card.isNull()) {
+        return {};
+    }
+
+    QSize size = targetSize;
+    if (size.isEmpty() || size.width() <= 0 || size.height() <= 0) {
+        size = QSize(1280, 720);
+    }
+    // Scale to cover the target, blur, then darken so UI text stays legible.
+    QImage cover = card.scaled(size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+    const int cw = qMin(cover.width(), size.width());
+    const int ch = qMin(cover.height(), size.height());
+    cover = cover.copy((cover.width() - cw) / 2, (cover.height() - ch) / 2, cw, ch);
+
+    const qreal radius = qMax(qreal(8.0), qMax(cw, ch) / 48.0);
+    const QImage blurred = applyBlur(cover, radius);
+    return applyScrim(blurred, 0.45);
 }
 
 bool ImageProcessor::writeMetadata(const QString& instancesDir, const QString& instanceId,

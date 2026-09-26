@@ -425,23 +425,59 @@ QString PrismBridge::instanceLogPath(const QString& id) const {
     return QString();
 }
 
-QVector<AccountInfo> PrismBridge::readAccounts() const {
-    QVector<AccountInfo> accounts;
-    if (m_instancesDir.isEmpty()) {
-        return accounts;
+// Locates accounts.json: XDG first (respected by Prism when set), then the
+// standard home path, then the data root that actually holds instances/ —
+// covers custom Prism data roots and PolyMC-heritage layouts.
+QString PrismBridge::resolveAccountsPath() const {
+    const QString xdgDataHome =
+        QProcessEnvironment::systemEnvironment().value(QLatin1String("XDG_DATA_HOME"));
+    QStringList candidates;
+    if (!xdgDataHome.trimmed().isEmpty()) {
+        candidates << QDir(xdgDataHome).filePath(QLatin1String("PrismLauncher/accounts.json"));
     }
-    // accounts.json sits in the Prism data root, next to instances/.
-    const QString path = QFileInfo(m_instancesDir).dir().filePath(QLatin1String("accounts.json"));
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return accounts;
+    candidates << QDir::homePath() + QLatin1String("/.local/share/PrismLauncher/accounts.json");
+    if (!m_instancesDir.isEmpty()) {
+        candidates << QFileInfo(m_instancesDir).dir().filePath(QLatin1String("accounts.json"));
     }
-    const QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
-    const QJsonArray arr = doc.array();
+    for (const QString& candidate : candidates) {
+        if (QFileInfo::exists(candidate)) {
+            return candidate;
+        }
+    }
+    return QString();
+}
+
+// Prism 9 schema:
+//   { "formatVersion": 3,
+//     "accounts": [ { "active": true, "type": "MSA",
+//                     "profile": { "name": "...", ... },
+//                     "entitlement": { "ownsMinecraft": true, ... }, ... } ] }
+// Legacy/PolyMC layouts carried a bare array with flat "name" fields.
+void PrismBridge::parseAccountsDocument(const QJsonDocument& doc, QVector<AccountInfo>* out) {
+    if (!out) {
+        return;
+    }
+    out->clear();
+    if (doc.isNull()) {
+        return;
+    }
+    // Modern Prism roots are objects carrying an "accounts" array; legacy
+    // PolyMC-era files were a bare array of flat account objects.
+    QJsonArray arr;
+    if (doc.isObject()) {
+        arr = doc.object().value(QLatin1String("accounts")).toArray();
+    } else {
+        arr = doc.array();
+    }
     for (const QJsonValue& v : arr) {
         const QJsonObject obj = v.toObject();
+        const QJsonObject profile = obj.value(QLatin1String("profile")).toObject();
+
         AccountInfo acc;
-        acc.name = obj.value(QLatin1String("name")).toString();
+        acc.name = profile.value(QLatin1String("name")).toString();
+        if (acc.name.isEmpty()) {
+            acc.name = obj.value(QLatin1String("name")).toString();
+        }
         const QString type = obj.value(QLatin1String("type")).toString();
         if (type == QLatin1String("MSA")) {
             acc.type = QLatin1String("Microsoft");
@@ -453,8 +489,33 @@ QVector<AccountInfo> PrismBridge::readAccounts() const {
             acc.type = type;
         }
         acc.lastSync = obj.value(QLatin1String("lastSync")).toString();
-        accounts.append(acc);
+        acc.active = obj.value(QLatin1String("active")).toBool();
+        acc.ownsMinecraft = obj.value(QLatin1String("entitlement"))
+                                .toObject()
+                                .value(QLatin1String("ownsMinecraft"))
+                                .toBool();
+        if (acc.name.isEmpty() && !acc.active) {
+            continue;  // unusable entry
+        }
+        out->append(acc);
     }
+    // The active session sorts first so callers can take accounts.first().
+    std::sort(out->begin(), out->end(), [](const AccountInfo& a, const AccountInfo& b) {
+        return a.active != b.active && b.active;
+    });
+}
+
+QVector<AccountInfo> PrismBridge::readAccounts() const {
+    QVector<AccountInfo> accounts;
+    const QString path = resolveAccountsPath();
+    if (path.isEmpty()) {
+        return accounts;
+    }
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return accounts;
+    }
+    parseAccountsDocument(QJsonDocument::fromJson(file.readAll()), &accounts);
     return accounts;
 }
 

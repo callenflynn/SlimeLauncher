@@ -46,6 +46,13 @@ int main(int argc, char* argv[]) {
         return 2;
     }
 
+    // Confine account resolution to the fixture: PrismBridge checks
+    // $XDG_DATA_HOME first, so pointing it at the fake tree makes the
+    // accounts checks deterministic even on machines with a real Prism
+    // install in ~/.local/share.
+    QDir(home + "/xdg").mkpath(QStringLiteral("."));
+    qputenv("XDG_DATA_HOME", (home + "/xdg").toUtf8());
+
     PrismBridge bridge;
 
     // 1. Empty environment → must fail with MSG_NO_PRISM.
@@ -137,10 +144,78 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // 5. Accounts read (empty file → empty list, no crash).
+    // 5. Accounts read — real Prism 9 nested schema with an active MSA
+    // profile, plus a legacy bare-array file, must both parse; corrupt JSON
+    // must degrade to an empty list without crashing.
     {
-        const QVector<AccountInfo> accounts = bridge.readAccounts();
-        std::printf("accounts=%lld\n", static_cast<long long>(accounts.size()));
+        const QString accountsPath = home + "/xdg/PrismLauncher/accounts.json";
+        QDir(QFileInfo(accountsPath).absolutePath()).mkpath(QStringLiteral("."));
+
+        // Corrupt file → empty list, no crash.
+        {
+            QFile bad(accountsPath);
+            if (!bad.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                std::fprintf(stderr, "FAIL: cannot write %s\n", accountsPath.toUtf8().constData());
+                return 1;
+            }
+            bad.write(QByteArrayLiteral("{ this is not json"));
+            bad.close();
+        }
+        if (!bridge.readAccounts().isEmpty()) {
+            std::fprintf(stderr, "FAIL: corrupt accounts.json should yield empty list\n");
+            return 1;
+        }
+
+        // Real Prism 9 schema: object root, "accounts" array, nested profile.
+        {
+            QFile out(accountsPath);
+            if (!out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                std::fprintf(stderr, "FAIL: cannot write %s\n", accountsPath.toUtf8().constData());
+                return 1;
+            }
+            out.write(QByteArrayLiteral(
+                "{\n"
+                "  \"formatVersion\": 3,\n"
+                "  \"accounts\": [\n"
+                "    {\n"
+                "      \"active\": true,\n"
+                "      \"type\": \"MSA\",\n"
+                "      \"profile\": { \"id\": \"abc123\", \"name\": \"SmokeTester\",\n"
+                "                      \"capes\": [], \"skin\": {} },\n"
+                "      \"entitlement\": { \"ownsMinecraft\": true,\n"
+                "                         \"canPlayMinecraft\": true },\n"
+                "      \"lastSync\": \"2026-09-26T00:00:00.000Z\"\n"
+                "    }\n"
+                "  ]\n"
+                "}\n"));
+            out.close();
+        }
+        const QVector<AccountInfo> parsed = bridge.readAccounts();
+        if (parsed.size() != 1 || parsed.first().name != QLatin1String("SmokeTester") ||
+            parsed.first().type != QLatin1String("Microsoft") || !parsed.first().active ||
+            !parsed.first().ownsMinecraft) {
+            std::fprintf(stderr, "FAIL: nested accounts schema mismatch (n=%lld)\n",
+                         static_cast<long long>(parsed.size()));
+            return 1;
+        }
+
+        // Legacy bare-array schema must still parse.
+        {
+            QFile legacyOut(accountsPath);
+            if (!legacyOut.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                std::fprintf(stderr, "FAIL: cannot rewrite %s\n", accountsPath.toUtf8().constData());
+                return 1;
+            }
+            legacyOut.write(QByteArrayLiteral(
+                "[{\"name\": \"LegacyPlayer\", \"type\": \"offline\"}]\n"));
+            legacyOut.close();
+        }
+        const QVector<AccountInfo> legacyParsed = bridge.readAccounts();
+        if (legacyParsed.size() != 1 || legacyParsed.first().name != QLatin1String("LegacyPlayer")) {
+            std::fprintf(stderr, "FAIL: legacy accounts schema mismatch\n");
+            return 1;
+        }
+        std::printf("accounts parsing OK\n");
     }
 
     // 6. Launch routing: stub records its argv; verify the --launch verb.

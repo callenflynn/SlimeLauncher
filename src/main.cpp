@@ -23,7 +23,17 @@ int runDashboard(QApplication& app, PrismBridge& bridge, ThemeManager::Theme the
     GamepadFilter gamepad;
     app.installNativeEventFilter(&gamepad);
 
-    DashboardWindow dashboard(&bridge);
+    DashboardWindow dashboard(&bridge, &themes);
+    QObject::connect(&gamepad, &GamepadFilter::previousViewRequested, &dashboard,
+                     &DashboardWindow::cycleViewPrev);
+    QObject::connect(&gamepad, &GamepadFilter::nextViewRequested, &dashboard,
+                     &DashboardWindow::cycleViewNext);
+    QObject::connect(&gamepad, &GamepadFilter::optionsRequested, &dashboard,
+                     &DashboardWindow::optionsRequested);
+    QObject::connect(&gamepad, &GamepadFilter::searchRequested, &dashboard,
+                     &DashboardWindow::searchRequested);
+    QObject::connect(&gamepad, &GamepadFilter::prismRequested, &dashboard,
+                     &DashboardWindow::openPrismRequested);
     dashboard.show();
     return app.exec();
 }

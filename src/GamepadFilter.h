@@ -12,22 +12,27 @@
 
 #include <linux/joystick.h>
 
-// Application-wide gamepad → keyboard event filter.
+// Application-wide gamepad → console action filter.
 //
 // Reads /dev/input/js* directly (no SDL2 dependency) through low-level fds
-// pumped by a poll timer, and translates gamepad input into synthetic Qt key
-// events posted to the focused widget, so gamepad and keyboard share one
-// focus model.
+// pumped by a poll timer. Face buttons and shoulders become synthetic Qt key
+// events posted to the focus widget (shared focus model); the shoulders and
+// auxiliary buttons additionally emit dedicated console signals that the
+// dashboard binds to view switching, the options menu, the search overlay,
+// and the Prism fallback.
 //
-// Mapping:
-//   A (js button 0)      → Enter
-//   B (js button 1)      → Escape
-//   X (js button 2)      → F5
-//   Y (js button 3)      → Tab
-//   Start (js button 9)  → F5
+// Mapping (Linux joystick API button indices):
+//   A (0)                → Enter (+ pressed signal)
+//   B (1)                → Escape (+ back signal)
+//   X (2)                → Key_E → Options context menu signal
+//   Y (3)                → Key_F → Search overlay signal
+//   LB (4) / RB (5)      → view-switch signal (Prev/Next), no key posted
+//   Back (8)             → back signal
+//   Start/Menu (9, 10)   → Key_O → open-Prism signal
 //   D-pad / left stick   → Arrow keys
 //
-// Deadzone 35%, hold-repeat with acceleration after 450 ms.
+// Deadzone 35%, hold-repeat with acceleration after 450 ms (face buttons and
+// arrows only — shoulders/menu actions fire once per press).
 class GamepadFilter : public QObject, public QAbstractNativeEventFilter {
     Q_OBJECT
 
@@ -40,6 +45,14 @@ public:
 
 signals:
     void gamepadKey(int key);
+
+    // Console semantic actions (emitted in addition to the key mapping).
+    void previousViewRequested();
+    void nextViewRequested();
+    void optionsRequested();
+    void searchRequested();
+    void prismRequested();
+    void backRequested();
 
 private:
     struct PadState {
@@ -57,6 +70,12 @@ private:
     void pump();
     void handleEvent(PadState& pad, const js_event& ev);
     void postKey(int key, bool autoRepeat);
+
+    // Maps a pressed button index to a key + console action pair. Returns
+    // false for unmapped indices.
+    static bool mapButton(int index, int* key);
+
+    void dispatchAction(int action);
 
     QHash<int, PadState*> m_pads;
     QTimer* m_pollTimer = nullptr;

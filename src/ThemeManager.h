@@ -19,6 +19,9 @@ public:
     Theme theme() const { return m_theme; }
     void setTheme(Theme theme);
     void persist(const QString& binaryPath, const QString& instancesDir);
+    // Re-writes only the theme key (used by the Settings page toggle when
+    // Prism paths were configured elsewhere or not yet known).
+    void persistTheme(Theme theme);
 
     // Applies the QSS for the current theme to qApp.
     void apply();

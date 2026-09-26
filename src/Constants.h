@@ -30,7 +30,7 @@ inline const QColor COLOR_ACCENT = QColor(0x00, 0xf0, 0xff);   // electric cyan
 inline const QColor COLOR_ACCENT2 = QColor(0x8a, 0x2b, 0xe2);  // violet
 inline const QColor COLOR_DANGER = QColor(0xff, 0x4d, 0x6a);
 
-constexpr int CARD_RADIUS = 14;      // rounded corner radius on cards
+constexpr int CARD_RADIUS = 12;      // rounded corner radius on cards
 constexpr int BUTTON_RADIUS = 10;    // rounded corner radius on buttons
 constexpr int CARD_COLUMNS_MIN = 3;  // responsive grid clamps
 constexpr int CARD_COLUMNS_MAX = 8;
@@ -40,7 +40,7 @@ constexpr int CARD_WIDTH = 216;
 constexpr int CARD_HEIGHT = 324;  // 216 * 3 / 2
 constexpr int GRID_SPACING = 22;
 constexpr int GRID_MARGIN = 28;
-constexpr qreal FOCUS_SCALE = 1.06;  // active card scale-up transform
+constexpr qreal FOCUS_SCALE = 1.08;  // active card scale-up transform
 
 // ---- Object-name registry (stable — QSS keys on these) --------------------
 constexpr char OBJ_HERO_CARD[] = "HeroCard";
@@ -48,7 +48,6 @@ constexpr char OBJ_INSTANCE_CARD[] = "InstanceCard";
 constexpr char OBJ_BUTTON[] = "SlimeButton";
 constexpr char OBJ_PRIMARY_BUTTON[] = "PrimaryButton";
 constexpr char OBJ_DANGER_BUTTON[] = "DangerButton";
-constexpr char OBJ_SIDE_NAV[] = "SideNav";
 constexpr char OBJ_LOG_VIEW[] = "LogView";
 constexpr char OBJ_STATUS_CHIP[] = "StatusChip";
 constexpr char OBJ_SEARCH[] = "SearchField";
@@ -117,6 +116,9 @@ constexpr char MSG_ARTWORK_PICK_TITLE[] = "Choose card artwork";
 constexpr char MSG_ARTWORK_PICK_FILTER[] = "Images (*.png *.jpg *.jpeg *.webp *.bmp)";
 constexpr char MSG_ARTWORK_FAILED[] = "Could not process the selected image.";
 constexpr char MSG_CONTEXT_PLAY[] = "Play";
+constexpr char MSG_ACCOUNT_NONE[] = "No account";
+constexpr char MSG_ACCOUNT_IN[] = "Logged in as %1";
+constexpr char MSG_ACCOUNT_OFF[] = "Account: %1";
 constexpr char MSG_CONTEXT_EDIT[] = "Edit in Prism";
 constexpr char MSG_CONTEXT_ARTWORK[] = "Change Card Artwork…";
 constexpr char MSG_CONTEXT_LOGS[] = "View Logs";

@@ -17,9 +17,12 @@ add_executable(slime-launcher
     src/GamepadFilter.cpp
     src/ThemeManager.cpp
     src/InstanceCard.cpp
+    src/HeroBackdrop.cpp
+    src/ControllerLegend.cpp
+    src/SearchOverlay.cpp
+    src/SettingsView.cpp
     src/LogViewer.cpp
     src/ErrorPanel.cpp
-    src/SideNav.cpp
     src/SetupWizard.cpp
     src/DashboardWindow.cpp
     ${SLIME_RESOURCES}

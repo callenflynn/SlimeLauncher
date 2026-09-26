@@ -268,16 +268,63 @@ void InstanceCard::paintEvent(QPaintEvent* event) {
         painter.setBrush(stripBg);
         painter.drawRoundedRect(strip, 8, 8);
 
-        QFont actionFont = painter.font();
-        actionFont.setPixelSize(15);
-        painter.setFont(actionFont);
-        static const QString glyphs[] = {QString::fromUtf8("▶"), QString::fromUtf8("🖼"),
-                                         QString::fromUtf8("✎"), QString::fromUtf8("≡")};
+        // Vector-drawn action icons: triangle (play), frame + landscape
+        // (artwork), pencil (edit), lines (logs). Pure QPainter primitives —
+        // independent of installed fonts.
         for (int i = 0; i < ACTION_COUNT; ++i) {
             const QRectF cell(strip.left() + i * (ACTION_W + 6), strip.top(), ACTION_W, ACTION_H);
             const bool hot = (i == m_pressedAction);
-            painter.setPen(hot ? Constants::COLOR_ACCENT : Constants::COLOR_TEXT);
-            painter.drawText(cell, Qt::AlignCenter, glyphs[i]);
+            painter.setPen(Qt::NoPen);
+            if (hot) {
+                painter.setBrush(QColor(Constants::COLOR_ACCENT.red(), Constants::COLOR_ACCENT.green(),
+                                        Constants::COLOR_ACCENT.blue(), 40));
+                painter.drawRoundedRect(cell.adjusted(2, 2, -2, -2), 6, 6);
+            }
+            const QColor icon = hot ? Constants::COLOR_ACCENT : Constants::COLOR_TEXT;
+            const QRectF box = cell.adjusted(9, 7, -9, -7);
+            painter.setPen(QPen(icon, 1.6));
+            painter.setBrush(Qt::NoBrush);
+            switch (i) {
+                case 0: {  // Play: filled triangle
+                    QPainterPath tri;
+                    tri.moveTo(box.left() + 1, box.top() + 1);
+                    tri.lineTo(box.left() + 1, box.bottom());
+                    tri.lineTo(box.right(), (box.top() + box.bottom()) / 2);
+                    tri.closeSubpath();
+                    painter.setPen(Qt::NoPen);
+                    painter.setBrush(icon);
+                    painter.drawPath(tri);
+                    painter.setBrush(Qt::NoBrush);
+                    break;
+                }
+                case 1: {  // Artwork: frame with mountain/sun motif
+                    painter.drawRect(box);
+                    painter.drawEllipse(QRectF(box.right() - 5, box.top() + 1, 4, 4));
+                    QPainterPath ridge;
+                    ridge.moveTo(box.left(), box.bottom() - 1);
+                    ridge.lineTo(box.left() + box.width() * 0.42, box.top() + box.height() * 0.45);
+                    ridge.lineTo(box.right(), box.bottom() - 1);
+                    painter.drawPath(ridge);
+                    break;
+                }
+                case 2: {  // Edit: pencil
+                    painter.drawLine(box.bottomLeft(), box.topRight());
+                    painter.drawLine(box.bottomLeft(), QPointF(box.bottomLeft().x() + 3, box.bottomLeft().y()));
+                    painter.drawLine(box.bottomLeft(), QPointF(box.bottomLeft().x(), box.bottomLeft().y() - 3));
+                    painter.drawLine(box.topRight(), QPointF(box.topRight().x() - 3, box.topRight().y()));
+                    painter.drawLine(box.topRight(), QPointF(box.topRight().x(), box.topRight().y() + 3));
+                    break;
+                }
+                case 3: {  // Logs: three stacked lines
+                    for (int line = 0; line < 3; ++line) {
+                        const qreal ly = box.top() + line * box.height() / 2.0;
+                        painter.drawLine(QPointF(box.left(), ly), QPointF(box.right(), ly));
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
         }
     }
 }
@@ -396,8 +443,10 @@ void InstanceCard::keyPressEvent(QKeyEvent* event) {
 }
 
 void InstanceCard::showContextMenu(const QPoint& globalPos) {
+    // Public entry point: also invoked by the dashboard when the gamepad X
+    // button requests the options menu for the selected card.
     QMenu menu(this);
-    QAction* play = menu.addAction(QStringLiteral("▶  ") + QLatin1String(Constants::MSG_CONTEXT_PLAY));
+    QAction* play = menu.addAction(QLatin1String(Constants::MSG_CONTEXT_PLAY));
     menu.addSeparator();
     QAction* artwork = menu.addAction(QLatin1String(Constants::MSG_CONTEXT_ARTWORK));
     QAction* logs = menu.addAction(QLatin1String(Constants::MSG_CONTEXT_LOGS));

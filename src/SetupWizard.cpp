@@ -138,6 +138,18 @@ QWizardPage* SetupWizard::createAccountsPage() {
     m_accountList = new QListWidget(page);
     m_accountList->setSelectionMode(QAbstractItemView::NoSelection);
     m_accountList->setFixedHeight(180);
+    for (const AccountInfo& account : m_bridge->readAccounts()) {
+        QString line = account.active
+            ? QStringLiteral("Logged in as %1  ·  %2").arg(account.name, account.type)
+            : QStringLiteral("%1  ·  %2").arg(account.name, account.type);
+        if (account.active) {
+            line += QStringLiteral("   [active]");
+        }
+        m_accountList->addItem(line);
+    }
+    if (m_accountList->count() == 0) {
+        m_accountList->addItem(QLatin1String("No accounts detected — sign in through Prism."));
+    }
 
     m_openPrismButton = new QPushButton(QLatin1String("Open Prism to sign in / manage accounts"), page);
     m_openPrismButton->setObjectName(QLatin1String(Constants::OBJ_PRIMARY_BUTTON));

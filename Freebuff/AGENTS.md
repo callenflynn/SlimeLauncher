@@ -61,9 +61,10 @@ instances/<id>/slimelauncher/                — per-instance poster artwork + m
   - `readAccounts()` — parses `accounts.json` for display only.
   - Emits Qt signals; owns no UI. All parsing returns result structs; no exceptions cross module boundaries.
 - **`GamepadFilter`** (`GamepadFilter.h/.cpp`) — `QObject` event filter installed on the whole application.
-  - Reads `/dev/input/js*` via low-level `open()`/`read()` fds integrated with the Qt event loop through `QSocketNotifier` (no SDL2 dependency).
-  - Maps gamepad → synthetic Qt key events posted to the focus widget: A → Enter/Return, B → Escape, D-pad + left stick → arrows, Start → F5, Y → Tab.
-  - Analog stick deadzone 0.35; hold-repeat with acceleration after 450 ms.
+  - Reads `/dev/input/js*` via low-level `open()`/`read()` fds pumped by a poll timer (no SDL2 dependency).
+  - Console mapping: A(0) → Enter + play, B(1) → Escape + back, X(2) → options menu, Y(3) → search overlay, LB(4)/RB(5) → previous/next view, Back(8) → back, Start(9)/Menu(10) → open Prism. D-pad + left stick → arrow keys.
+  - Semantic actions are emitted as dedicated Qt signals (`nextViewRequested`, `optionsRequested`, `searchRequested`, `prismRequested`, `backRequested`, …) that `main.cpp` binds to dashboard slots; face-button keys are also posted to the focus widget so keyboard and gamepad share one focus model.
+  - Analog stick deadzone 0.35; hold-repeat (face buttons/arrows only) after 450 ms, then every 120 ms. Shoulders and menu actions fire once per press.
   - Up to 4 gamepads; hot-plug re-enumeration on each event loop pass.
 - **`ThemeManager`** (`ThemeManager.h/.cpp`) — owns theme state and the single global QSS string.
   - Builds QSS for `Theme::Dark` (default) and `Theme::Light`; applied via `QApplication::setStyleSheet`.
@@ -81,19 +82,18 @@ instances/<id>/slimelauncher/                — per-instance poster artwork + m
   1. **Theme Selection** — dark/light live preview swatches; global QSS already applied, so selection previews instantly; saved on finish.
   2. **Prism Path Validation** — auto-scan of standard paths with a live result panel; Flatpak-detection warning block (descriptive, native-package remediation); manual path entry for custom installs; Finish enabled only on validated native install.
   3. **Account & Auth Interface** — read-only account list from `accounts.json` (name, type, last-sync), "Open Prism to sign in / manage accounts" fallback button. Slime never touches credentials.
-- **`DashboardWindow`** (`DashboardWindow.h/.cpp`) — console-style main window.
-  - Glass top bar: title, rounded pill search filter, clock.
-  - Side nav: All Games / Refresh / Open Prism / account chip (read-only).
-  - Center: responsive 2:3 poster card grid (custom `QGridLayout` re-flowed on resize, 3–8 columns); selection starts on the most recently played card.
-  - Spatial navigation: arrow keys / D-pad move focus card-by-card (bounded by the column count); Enter plays.
-  - Bottom control strip: Play / Logs / Open Prism bound to the selected instance.
-  - "Change Card Artwork…" native file picker routes through `PrismBridge::setInstanceCardArtwork`.
-  - Shortcuts: Enter=play, F5=refresh, Escape=clear search/back, L=logs, O=open prism, Menu=card context menu.
+- **`DashboardWindow`** (`DashboardWindow.h/.cpp`) — full-screen console main window.
+  - Top bar: wordmark, active-account chip (`Logged in as …`), clock. **No sidebar, no persistent search field.**
+  - `HeroBackdrop` (`HeroBackdrop.h/.cpp`) sits behind the content stack and cross-fades to the selected instance's wallpaper (`slimelauncher/background.png`, else a blurred/darkened card derivative) on every selection change.
+  - Center stack: Library (responsive 2:3 poster grid, 3–8 columns, arrow/D-pad spatial navigation), Settings (`SettingsView`: theme toggle, account readout, Prism fallback actions), Logs, Error. LB/RB cycle Library ↔ Settings.
+  - `SearchOverlay` (`SearchOverlay.h/.cpp`): modal centered filter field opened by Y / `F`; Esc cancels, Enter applies.
+  - Footer: detail line + Play button + `ControllerLegend` (`ControllerLegend.h/.cpp`) — vector-drawn `[A] Play [X] Options [Y] Search [LB/RB] Views [MENU] Open Prism` badges (pure `QPainter` primitives, no font-dependent glyphs).
+  - Shortcuts: Enter=play, F5=refresh, Escape=back/clear filter, E=options, F=search, O=open Prism, L=logs, `[`/`]`=view cycle (keyboard fallbacks for LB/RB).
 - **`InstanceCard`** (`InstanceCard.h/.cpp`) — painter-drawn 2:3 poster card (Steam Big Picture style).
   - Artwork priority: instance `slimelauncher/card.png` → Prism icon (center-cropped in memory) → deterministic default poster → painted fallback surface. Never renders empty.
   - Bottom gradient overlay carries name, `MC <version> · last-played`, and a loader pill with per-loader hue (Fabric/Forge/NeoForge/Quilt, violet for Vanilla/unknown).
   - Focus (hover, selection, or keyboard) animates a 1.0 → 1.06 scale (`QVariantAnimation`, 140 ms OutCubic) and paints the cyan ring + violet under-glow + ambient halo.
-  - Hover-revealed quick-action strip (▶ play / 🖼 artwork / ✎ edit / ≡ logs) plus a right-click context menu with the same actions. Click/Enter = select, double-click/▶ = play. Emits `selected`, `activated`, `editRequested`, `artworkChangeRequested`, `logsRequested`.
+  - Hover-revealed quick-action strip with vector-drawn icons (triangle=play, framed landscape=artwork, pencil=edit, lines=logs) plus a right-click context menu with the same actions; `showContextMenu()` is public so the dashboard can open it for gamepad X. Click/Enter = select, double-click/triangle = play. Emits `selected`, `activated`, `editRequested`, `artworkChangeRequested`, `logsRequested`.
 - **`LogViewer`** (`LogViewer.h/.cpp`) — panel with read-only `QPlainTextEdit` (maximumBlockCount 4000), follow toggle (auto-scroll pauses on manual scroll-up), copy/clear actions, status line.
   - Backed by `PrismBridge::tailLog` watching `latest.log` (and legacy `1.log`). Handles missing-file gracefully ("waiting for log file…").
   - Strictly read-only — no write operations.

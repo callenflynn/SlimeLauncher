@@ -25,6 +25,8 @@ struct AccountInfo {
     QString name;
     QString type;
     QString lastSync;
+    bool active = false;          // Prism marks the in-use session "active": true
+    bool ownsMinecraft = false;   // entitlement.ownsMinecraft (MSA accounts)
 };
 
 struct EnvValidation {
@@ -89,6 +91,8 @@ private:
     InstanceCardModel parseInstanceDir(const QDir& dir) const;
     QString loaderFromComponents(const QJsonObject& root, QString* gameVersion) const;
     QString iconPathFor(const QString& iconKey) const;
+    QString resolveAccountsPath() const;
+    static void parseAccountsDocument(const QJsonDocument& doc, QVector<AccountInfo>* out);
 
     QString m_binaryPath;
     QString m_instancesDir;
