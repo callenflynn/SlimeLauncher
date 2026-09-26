@@ -2,6 +2,8 @@
 name: Compatibility boundaries
 description: The read-vs-write rules that keep Prism state intact
 ---
+[← SLIME LAUNCHER](../)
+
 
 # Compatibility boundaries
 

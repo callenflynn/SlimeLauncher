@@ -2,6 +2,8 @@
 name: Log viewer
 description: Real-time instance log tailing for crash triage
 ---
+[← SLIME LAUNCHER](../)
+
 
 # Log viewer
 

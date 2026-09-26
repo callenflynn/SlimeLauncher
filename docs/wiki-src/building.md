@@ -2,6 +2,8 @@
 name: Building
 description: Build Slime Launcher from source on Arch Linux
 ---
+[← SLIME LAUNCHER](../)
+
 
 # Building
 

@@ -2,6 +2,8 @@
 name: Overview
 description: What Slime Launcher is and what it does
 ---
+[← SLIME LAUNCHER](../)
+
 
 # Slime Launcher
 

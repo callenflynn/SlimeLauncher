@@ -2,6 +2,8 @@
 name: Controller navigation
 description: Gamepad mapping, keyboard shortcuts, and focus model
 ---
+[← SLIME LAUNCHER](../)
+
 
 # Controller navigation
 

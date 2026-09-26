@@ -2,6 +2,8 @@
 name: Setup wizard
 description: First-run theme selection, path validation, and accounts
 ---
+[← SLIME LAUNCHER](../)
+
 
 # Setup wizard
 

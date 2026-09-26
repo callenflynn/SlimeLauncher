@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Slime Launcher — Controller-first frontend for Prism Launcher</title>
+  <meta name="description" content="Slime Launcher is a controller-first C++20/Qt 6 native frontend for Prism Launcher on Linux. No sandbox, no QML — direct CLI execution and a console-style poster grid.">
+  <link rel="icon" href="slime.png">
+  <style>
+    :root {
+      --bg: #0a0a0c;
+      --panel: #0a0a0c;
+      --line: #222222;
+      --line-strong: #333333;
+      --text: #e8e8e8;
+      --muted: #8a8a93;
+      --accent: #00f0ff;
+      --mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--bg); }
+    body {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--text);
+      background: var(--bg);
+    }
+    a { color: var(--text); text-decoration: none; }
+    a:hover { color: var(--accent); }
+
+    .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+
+    /* ---- Header ---- */
+    header { border-bottom: 1px solid var(--line); }
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .wordmark {
+      font-weight: 700; letter-spacing: 0.14em; font-size: 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .wordmark img { width: 20px; height: 20px; display: block; }
+    .wordmark em { font-style: normal; color: var(--accent); }
+    nav.links { display: flex; gap: 24px; font-size: 13px; }
+    nav.links a { color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+    nav.links a:hover { color: var(--accent); }
+
+    /* ---- Hero ---- */
+    .hero { border-bottom: 1px solid var(--line); padding: 72px 0 64px; }
+    .hero h1 {
+      margin: 0 0 18px;
+      font-size: clamp(28px, 5vw, 44px);
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      font-weight: 700;
+    }
+    .hero h1 em { font-style: normal; color: var(--accent); }
+    .hero p.lede { margin: 0 0 32px; max-width: 640px; color: var(--muted); font-size: 15px; }
+    .cta { display: flex; flex-wrap: wrap; gap: 12px; }
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      border: 1px solid var(--line-strong);
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 700; }
+    .btn.primary:hover { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+
+    /* ---- Feature grid ---- */
+    .section { border-bottom: 1px solid var(--line); padding: 48px 0; }
+    .section > h2 {
+      margin: 0 0 6px;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
+    }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      border: 1px solid var(--line);
+    }
+    .feature { padding: 22px 22px 24px; border: 1px solid var(--line); margin: -1px 0 0 -1px; }
+    .feature h3 { margin: 0 0 8px; font-size: 14px; letter-spacing: 0.04em; }
+    .feature h3 em { font-style: normal; color: var(--accent); }
+    .feature p { margin: 0; color: var(--muted); font-size: 13px; }
+
+    /* ---- Matrix ---- */
+    table { border-collapse: collapse; width: 100%; border: 1px solid var(--line); }
+    th, td { border: 1px solid var(--line); padding: 9px 14px; text-align: left; font-size: 13px; }
+    th { color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; }
+    td { color: var(--text); }
+    td:first-child { color: var(--muted); white-space: nowrap; }
+
+    /* ---- Quickstart ---- */
+    pre {
+      margin: 0;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 18px 20px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    code { font-family: var(--mono); }
+    pre .c { color: var(--muted); }
+    pre .p { color: var(--accent); }
+    .note { margin: 14px 0 0; color: var(--muted); font-size: 12px; }
+
+    /* ---- Footer ---- */
+    footer { padding: 28px 0 48px; }
+    .foot {
+      display: flex; flex-wrap: wrap; gap: 18px; justify-content: space-between;
+      color: var(--muted); font-size: 12px; letter-spacing: 0.04em;
+    }
+    .foot a { color: var(--muted); border-bottom: 1px solid var(--line-strong); }
+    .foot a:hover { color: var(--accent); border-color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="wordmark" href="/">
+      <img src="slime.png" alt="">
+      SLIME<em>&nbsp;LAUNCHER</em>
+    </a>
+    <nav class="links">
+      <a href="/docs/">Docs</a>
+      <a href="https://github.com/callenflynn/SlimeLauncher">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <h1>Controller-first launcher frontend for <em>Prism Launcher</em></h1>
+    <p class="lede">
+      Slime Launcher is a native C++20/Qt 6 frontend wrapper for Prism Launcher on Arch Linux.
+      It renders your instance library as a console-style poster grid and executes every launch
+      through Prism's own CLI — no sandbox, no middleware.
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/callenflynn/SlimeLauncher">GitHub Repo</a>
+      <a class="btn" href="/docs/building.html">Build Guide</a>
+      <a class="btn" href="/docs/">Docs</a>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="wrap">
+    <h2>Key features</h2>
+    <div class="features">
+      <div class="feature">
+        <h3><em>01</em> Native C++20 / Qt 6 Widgets</h3>
+        <p>No QML, no web views, no runtime interpreters. One binary, Qt 6.2+ and a C++20 compiler are the only dependencies.</p>
+      </div>
+      <div class="feature">
+        <h3><em>02</em> Zero-sandbox CLI execution</h3>
+        <p>Launches route directly through <code>prismlauncher --launch &lt;id&gt;</code> via detached processes. Flatpak Prism is detected and rejected — native packages only.</p>
+      </div>
+      <div class="feature">
+        <h3><em>03</em> Gamepad spatial navigation</h3>
+        <p>Reads <code>/dev/input/js*</code> directly — no SDL2. D-pad and analog stick drive the same focus model as keyboard and mouse, with hold-repeat and hot-plug support.</p>
+      </div>
+      <div class="feature">
+        <h3><em>04</em> Automatic <code>slimelauncher/</code> asset parsing</h3>
+        <p>Every Prism instance gets an asset folder: 2:3 poster art, deterministic default seeding, and a center-crop engine (300×450–600×900) for custom covers.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="wrap">
+    <h2>Specifications</h2>
+    <table>
+      <tr><th>Language</th><td>C++20</td></tr>
+      <tr><th>UI framework</th><td>Qt 6 Widgets (no QML)</td></tr>
+      <tr><th>Build system</th><td>CMake ≥ 3.22 + Ninja</td></tr>
+      <tr><th>Target platform</th><td>Arch Linux (works on any distro with native Prism)</td></tr>
+      <tr><th>Prism compatibility</th><td>Prism Launcher ≥ 9.0, native packages only</td></tr>
+      <tr><th>Input</th><td>Gamepad (up to 4 pads), keyboard, mouse — one shared focus model</td></tr>
+      <tr><th>Prism data policy</th><td>Read-only; Slime writes only <code>slimelauncher/</code> folders and its own config</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <div class="wrap">
+    <h2>Quickstart</h2>
+<pre><code><span class="c"># Arch Linux dependencies</span>
+<span class="p">sudo</span> pacman -S --needed base-devel cmake ninja qt6-base
+
+<span class="c"># Clone and build</span>
+<span class="p">git</span> clone https://github.com/callenflynn/SlimeLauncher.git
+<span class="p">cd</span> SlimeLauncher
+<span class="p">cmake</span> -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+<span class="p">cmake</span> --build build
+
+<span class="c"># Run</span>
+./build/bin/slime-launcher</code></pre>
+    <p class="note">
+      Requires a native Prism Launcher ≥ 9.0 install (<code>extra/prismlauncher</code> or AUR
+      <code>prismlauncher-bin</code>). Flatpak is unsupported. Full guide:
+      <a href="/docs/building.html">/docs/building.html</a>
+    </p>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <span>SLIME LAUNCHER — Prism Launcher remains the source of truth.</span>
+    <span>
+      <a href="/docs/">Docs</a> ·
+      <a href="https://github.com/callenflynn/SlimeLauncher">GitHub</a> ·
+      <span>v2.0.0</span>
+    </span>
+  </div>
+</footer>
+
+</body>
+</html>

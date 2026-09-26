@@ -71,16 +71,22 @@
 <a href="wiki.html" class="active">Wiki</a>
 </nav>
     <main>
+<p><a href="../">← SLIME LAUNCHER</a></p>
 <h1 id="this-wiki">This wiki</h1>
 <p>The Slime Launcher wiki is generated with <a href="https://github.com/CStaks/nsDocs">nsdocs</a> — a zero-dependency static wiki builder (one Python file, Markdown in, plain HTML out).</p>
 <h2 id="layout">Layout</h2>
+<p>The wiki is served under <code>/docs/</code> on the project site, behind the minimalist landing page at the root (<code>docs/site/index.html</code>). All wiki links are relative, so the same tree works locally and on GitHub Pages.</p>
 <div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-text">nsdocs.yml                 ← wiki configuration (nav, branding, features)
 docs/
+├── site/                  ← landing page served at the site root (/)
+│   ├── index.html
+│   └── slime.png
 ├── wiki-src/              ← Markdown sources (edit these)
-│   ├── index.md
-│   ├── building.md
+│   ├── architecture.md
 │   └── …
-└── wiki/                  ← generated HTML (committed, do not hand-edit)</code></pre></div>
+└── wiki/                  ← generated HTML (committed, do not hand-edit)
+                            ← deployed to &lt;site&gt;/docs/ by the wiki workflow</code></pre></div>
+<p>Every page starts with a <code>[← SLIME LAUNCHER](../)</code> breadcrumb linking back to the landing page.</p>
 <h2 id="editing-a-page">Editing a page</h2>
 <ol><li>Edit the corresponding <code>.md</code> in <code>docs/wiki-src/</code>.</li><li>Set the page title and description in front matter:</li></ol>
 <div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-markdown">   ---

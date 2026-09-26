@@ -2,6 +2,8 @@
 name: Troubleshooting
 description: Common failures, diagnostics, and the headless smoke test
 ---
+[← SLIME LAUNCHER](../)
+
 
 # Troubleshooting
 

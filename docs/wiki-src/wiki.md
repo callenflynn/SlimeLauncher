@@ -2,6 +2,8 @@
 name: This wiki
 description: How the Slime Launcher wiki is built with nsdocs
 ---
+[← SLIME LAUNCHER](../)
+
 
 # This wiki
 
@@ -9,15 +11,22 @@ The Slime Launcher wiki is generated with [nsdocs](https://github.com/CStaks/nsD
 
 ## Layout
 
+The wiki is served under `/docs/` on the project site, behind the minimalist landing page at the root (`docs/site/index.html`). All wiki links are relative, so the same tree works locally and on GitHub Pages.
+
 ```text
 nsdocs.yml                 ← wiki configuration (nav, branding, features)
 docs/
+├── site/                  ← landing page served at the site root (/)
+│   ├── index.html
+│   └── slime.png
 ├── wiki-src/              ← Markdown sources (edit these)
-│   ├── index.md
-│   ├── building.md
+│   ├── architecture.md
 │   └── …
 └── wiki/                  ← generated HTML (committed, do not hand-edit)
+                            ← deployed to <site>/docs/ by the wiki workflow
 ```
+
+Every page starts with a `[← SLIME LAUNCHER](../)` breadcrumb linking back to the landing page.
 
 ## Editing a page
 

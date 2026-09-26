@@ -2,6 +2,8 @@
 name: Installing Prism natively
 description: Native Prism Launcher installation and Flatpak rejection policy
 ---
+[← SLIME LAUNCHER](../)
+
 
 # Installing Prism natively
 

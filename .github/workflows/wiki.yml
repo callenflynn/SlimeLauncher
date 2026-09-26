@@ -4,12 +4,14 @@ on:
   push:
     branches: [main]
     paths:
+      - "docs/site/**"
       - "docs/wiki-src/**"
       - "docs/wiki/**"
       - "nsdocs.yml"
       - ".github/workflows/wiki.yml"
   pull_request:
     paths:
+      - "docs/site/**"
       - "docs/wiki-src/**"
       - "docs/wiki/**"
       - "nsdocs.yml"
@@ -59,10 +61,18 @@ jobs:
           config: nsdocs.yml
           check: false
 
+      # Site layout: brutalist landing page at the site root (/), generated
+      # wiki under /docs/ (all wiki links are relative, so they resolve).
+      - name: Stage Pages site
+        run: |
+          mkdir -p stage/docs
+          cp -r docs/site/. stage/
+          cp -r docs/wiki/. stage/docs/
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/wiki
+          path: stage
 
   deploy:
     name: Deploy to GitHub Pages

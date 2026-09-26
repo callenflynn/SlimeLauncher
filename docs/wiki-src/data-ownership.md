@@ -2,6 +2,8 @@
 name: Data ownership
 description: Which files Prism owns, which Slime owns, and what Slime reads
 ---
+[← SLIME LAUNCHER](../)
+
 
 # Data ownership
 

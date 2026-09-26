@@ -2,6 +2,8 @@
 name: Architecture
 description: Module map and data flow of Slime Launcher
 ---
+[← SLIME LAUNCHER](../)
+
 
 # Architecture
 

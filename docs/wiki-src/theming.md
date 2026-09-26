@@ -2,6 +2,8 @@
 name: Theming
 description: QSS system, color tokens, and the object-name registry
 ---
+[← SLIME LAUNCHER](../)
+
 
 # Theming
 

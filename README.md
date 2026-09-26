@@ -49,7 +49,8 @@ The install step ships `share/applications/slime-launcher.desktop` (registered b
 
 ## Documentation
 
-- **[Wiki](https://callenflynn.github.io/SlimeLauncher/)** — user and contributor docs, built from `docs/wiki-src/` with [nsdocs](https://github.com/CStaks/nsDocs)
+- **[Landing page](https://callenflynn.github.io/SlimeLauncher/)** — minimalist project overview, spec matrix, and quickstart
+- **[Docs](https://callenflynn.github.io/SlimeLauncher/docs/)** — user and contributor docs at `/docs/`, built from `docs/wiki-src/` with [nsdocs](https://github.com/CStaks/nsDocs)
 - [`Freebuff/CLAUDE.md`](Freebuff/CLAUDE.md) — build commands, coding rules, QSS/styling rules, state lifecycle
 - [`Freebuff/AGENTS.md`](Freebuff/AGENTS.md) — architecture, compatibility boundaries, data ownership, component specs
 
