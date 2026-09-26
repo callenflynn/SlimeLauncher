@@ -3,20 +3,22 @@
 #include "Constants.h"
 #include "InstanceCardModel.h"
 
-#include <QFrame>
-#include <QMouseEvent>
-#include <QPaintEvent>
+#include <QImage>
+#include <QVariantAnimation>
 #include <QWidget>
 
-class QLabel;
-class QVBoxLayout;
+class QPaintEvent;
+class QMouseEvent;
+class QKeyEvent;
+class QContextMenuEvent;
 
-// Minimalist high-contrast instance tile.
+// Poster-style instance card (2:3, Steam Big Picture / Playnite style).
 //
-// Shows: name, version flag strip, loader chip, last-played relative time,
-// and a NOW PLAYING badge. Selection = 3px neon ring via dynamic property +
-// painted 8px glow in paintEvent (QSS has no box-shadow).
-class InstanceCard : public QFrame {
+// The whole card is painter-drawn: rounded 2:3 poster, dark bottom gradient
+// overlay, name + version tag + loader pill, NOW PLAYING badge, neon focus
+// ring with glow, and a hover/context action strip. Focus (hover, selection
+// or keyboard) animates a smooth 1.0 → FOCUS_SCALE transform.
+class InstanceCard : public QWidget {
     Q_OBJECT
 
 public:
@@ -29,26 +31,40 @@ public:
     void setSelected(bool selected);
     bool isSelected() const { return m_selected; }
 
+    QSize sizeHint() const override { return QSize(Constants::CARD_WIDTH, Constants::CARD_HEIGHT); }
+
 signals:
     void selected(const InstanceCardModel& info);
-    void activated(const InstanceCardModel& info);
+    void activated(const InstanceCardModel& info);   // play
+    void editRequested(const InstanceCardModel& info);
+    void artworkChangeRequested(const InstanceCardModel& info);
+    void logsRequested(const InstanceCardModel& info);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
+    void enterEvent(QEnterEvent* event) override;
+    void leaveEvent(QEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
     void mouseDoubleClickEvent(QMouseEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
+    void contextMenuEvent(QContextMenuEvent* event) override;
+    bool event(QEvent* event) override;  // hover tracking for the action strip
 
 private:
-    void buildUi();
-    static QString loaderChipColor(const QString& loader);
+    void startAnimation(qreal target);
+    qreal scale() const { return m_scale; }
+    QRectF cardRect() const;
+    void loadArtwork();
+    void updateHover(const QPoint& pos);
+    void showContextMenu(const QPoint& globalPos);
+    int hitAction(const QPoint& localPos) const;  // -1 none, 0 play, 1 artwork, 2 edit, 3 logs
 
     InstanceCardModel m_info;
     bool m_selected = false;
-    QLabel* m_nameLabel = nullptr;
-    QLabel* m_loaderChip = nullptr;
-    QLabel* m_flagsLabel = nullptr;
-    QLabel* m_timeLabel = nullptr;
-    QLabel* m_playingBadge = nullptr;
-    QVBoxLayout* m_layout = nullptr;
+    bool m_hovered = false;
+    int m_pressedAction = -1;
+    qreal m_scale = 1.0;
+    QVariantAnimation m_scaleAnimation;
+    QImage m_artwork;
 };

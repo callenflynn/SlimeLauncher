@@ -21,7 +21,8 @@ LogViewer::LogViewer(PrismBridge* bridge, QWidget* parent)
     auto* title = new QLabel(QLatin1String("INSTANCE LOG"), this);
     title->setStyleSheet(QStringLiteral("font-weight: 800; letter-spacing: 2px; font-size: 12px;"));
     m_statusLabel = new QLabel(this);
-    m_statusLabel->setStyleSheet(QStringLiteral("color: #8a8a8a; font-size: 11px;"));
+    m_statusLabel->setStyleSheet(QStringLiteral("color: %1; font-size: 11px;")
+                                     .arg(QLatin1String("#9a9eb0")));
 
     m_followButton = new QPushButton(QLatin1String("Follow: ON"), this);
     m_followButton->setCheckable(true);

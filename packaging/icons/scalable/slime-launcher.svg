@@ -1,0 +1,23 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f0f13"/>
+      <stop offset="1" stop-color="#1a1a24"/>
+    </linearGradient>
+    <linearGradient id="slime" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#00f0ff"/>
+      <stop offset="1" stop-color="#8a2be2"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/>
+  <path d="M52 148
+           C52 120 84 96 128 96
+           C172 96 204 120 204 148
+           C204 168 172 184 128 184
+           C84 184 52 168 52 148 Z"
+        fill="url(#slime)"/>
+  <rect x="96" y="122" width="14" height="22" rx="7" fill="#0f0f13"/>
+  <rect x="146" y="122" width="14" height="22" rx="7" fill="#0f0f13"/>
+  <path d="M52 148 C52 120 84 96 128 96 C172 96 204 120 204 148"
+        fill="none" stroke="#00f0ff" stroke-opacity="0.55" stroke-width="6" stroke-linecap="round"/>
+</svg>

@@ -12,6 +12,8 @@
 #include <QStringList>
 #include <QVector>
 
+#include "ImageProcessor.h"
+
 struct OpResult {
     bool ok = false;
     QString error;
@@ -57,11 +59,17 @@ public:
     EnvValidation validateEnvironment() const;
     OpResult verifyBinary() const;
 
-    // Instance data (read-only)
+    // Instance data (read-only); scanInstances also provisions the
+    // Slime-owned slimelauncher/ asset folder per instance.
     QVector<InstanceCardModel> scanInstances(QString* errorOut) const;
     QString instanceLogPath(const QString& id) const;
     QVector<AccountInfo> readAccounts() const;
     bool isInstanceRunning(const InstanceCardModel& info) const;
+
+    // Slime asset pipeline: runs a user-picked image through the 2:3 crop
+    // engine and saves it as the instance's card.png. The only file Slime
+    // writes inside an instance directory (under slimelauncher/).
+    OpResult setInstanceCardArtwork(const QString& instanceId, const QString& sourceImagePath);
 
     // Process operations (async)
     OpResult launchInstance(const QString& id);

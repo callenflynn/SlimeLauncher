@@ -4,7 +4,7 @@
 Start with [`CONTRIBUTING.md`](../CONTRIBUTING.md) at the repository root — it defines the contribution workflow, the non-negotiable data-integrity rules, and the automated release process (tag `v*.*.*` → `.github/workflows/release.yml`). Then read this file for the full architecture map.
 
 ## What This App Is
-A native C++20/Qt 6 (Widgets) controller-navigable launcher frontend for **native Prism Launcher** on Arch Linux, styled as a high-contrast brutalist/minimalist console UI (XMCL-inspired).
+A native C++20/Qt 6 (Widgets) controller-navigable launcher frontend for **native Prism Launcher** on Linux, styled as a modern console dashboard (Playnite / Steam Big Picture inspired): rounded 2:3 poster cards, charcoal glassmorphism surfaces, electric-cyan focus animations, and per-instance artwork.
 
 ## Non-Negotiable Boundaries
 
@@ -12,7 +12,7 @@ A native C++20/Qt 6 (Widgets) controller-navigable launcher frontend for **nativ
 2. **Read vs. Write Rules.**
    - Slime *may* read instance metadata (JSON/INI) directly from Prism paths using `QJsonDocument` / `QSettings`.
    - Slime *must never* write or mutate raw core configuration blocks (`instances/*/instance.cfg`, `accounts.json`, `mmc-pack.json`, `prismlauncher.cfg`) — that would corrupt Prism's internal state machine.
-   - Slime writes exactly one file: `~/.config/SlimeLauncher/slime.conf` (theme + validated Prism paths).
+   - Slime owns exactly two write domains: `~/.config/SlimeLauncher/slime.conf` (theme + validated Prism paths) and the `slimelauncher/` asset folder inside each instance (`card.png`, `background.png`, `metadata.json`) managed exclusively by `ImageProcessor`.
    - Accounts (`accounts.json`) are read-only to Slime. Sign-in flows delegate to Prism.
 3. **Execution Routing via CLI.** All launch operations route through Prism's standard CLI backend, spawned asynchronously via `QProcess`:
    ```cpp
@@ -32,6 +32,10 @@ Prism Launcher (authoritative owner)
 │   │   └── <id>/
 │   │       ├── instance.cfg                 — QSettings INI: name, iconKey, lastLaunchTime (read-only)
 │   │       ├── mmc-pack.json                — loader/version JSON (read-only)
+│   │       ├── slimelauncher/               — Slime-owned asset folder (auto-created)
+│   │       │   ├── card.png                 — 2:3 poster (300x450–600x900 px)
+│   │       │   ├── background.png           — optional hero wallpaper (reserved)
+│   │       │   └── metadata.json            — artwork provenance
 │   │       └── .minecraft/logs/latest.log   — live log tail target (read-only)
 │   ├── accounts.json                        — MS account sessions (read-only)
 │   ├── icons/                               — instance icons (read-only)
@@ -42,6 +46,7 @@ Prism Launcher (authoritative owner)
 Slime-owned data:
 ```
 ~/.config/SlimeLauncher/slime.conf           — theme, Prism binary path, instances dir path
+instances/<id>/slimelauncher/                — per-instance poster artwork + metadata
 ```
 
 ## Module Map
@@ -62,9 +67,14 @@ Slime-owned data:
   - Up to 4 gamepads; hot-plug re-enumeration on each event loop pass.
 - **`ThemeManager`** (`ThemeManager.h/.cpp`) — owns theme state and the single global QSS string.
   - Builds QSS for `Theme::Dark` (default) and `Theme::Light`; applied via `QApplication::setStyleSheet`.
+  - Rounded design language: 14px card radius, 10px control radius, glass chrome bars, charcoal `#0f0f13` base, cyan `#00f0ff` focus, violet `#8a2be2` support accent.
   - Persists theme + Prism paths to `~/.config/SlimeLauncher/slime.conf` (`QSettings`).
   - QSS keys on stable object names — see CLAUDE.md for the registry.
-- **`Constants.h`** — user-facing strings, path candidates, timing values, QSS object-name registry.
+- **`ImageProcessor`** (`ImageProcessor.h/.cpp`) — the 2:3 image engine and asset-folder manager.
+  - `processToCardRatio()` center-crops any image to exact 2:3 and pins it into the 300x450–600x900 px window (height snaps to a multiple of 3 so the pair is exact; no 1px drift).
+  - `ensureAssets()` auto-creates `<instance>/slimelauncher/` and seeds a deterministic default poster (SHA-256 of the instance id over the five bundled `:/cards/` resources) when `card.png` is missing.
+  - `importCardArtwork()` runs a user-picked file through the same engine and flips `metadata.json` to `artwork: custom`.
+- **`Constants.h`** — user-facing strings, path candidates, timing values, QSS object-name registry, design tokens (`COLOR_*`), and asset-pipeline names/paths.
 
 ### UI (`src/ui/`)
 - **`SetupWizard`** (`SetupWizard.h/.cpp`) — `QWizard`, 3 pages:
@@ -72,14 +82,18 @@ Slime-owned data:
   2. **Prism Path Validation** — auto-scan of standard paths with a live result panel; Flatpak-detection warning block (descriptive, native-package remediation); manual path entry for custom installs; Finish enabled only on validated native install.
   3. **Account & Auth Interface** — read-only account list from `accounts.json` (name, type, last-sync), "Open Prism to sign in / manage accounts" fallback button. Slime never touches credentials.
 - **`DashboardWindow`** (`DashboardWindow.h/.cpp`) — console-style main window.
-  - Top bar: title, search filter, refresh indicator, clock.
-  - Side nav: All / Refresh / Open Prism / account chip (read-only).
-  - Center: scrollable instance card grid (custom widget layout, not QListView) with a hero card (most recently played) on top.
+  - Glass top bar: title, rounded pill search filter, clock.
+  - Side nav: All Games / Refresh / Open Prism / account chip (read-only).
+  - Center: responsive 2:3 poster card grid (custom `QGridLayout` re-flowed on resize, 3–8 columns); selection starts on the most recently played card.
+  - Spatial navigation: arrow keys / D-pad move focus card-by-card (bounded by the column count); Enter plays.
   - Bottom control strip: Play / Logs / Open Prism bound to the selected instance.
-  - Shortcuts: Enter=play, F5=refresh, Escape=clear search/back, L=logs, O=open prism.
-- **`InstanceCard`** (`InstanceCard.h/.cpp`) — minimalist high-contrast tile: name, version flag strip, loader chip (Fabric/Forge/NeoForge/Quilt/Vanilla), last-played relative time, NOW PLAYING state.
-  - Selected state = 3px neon ring + painted glow (dynamic property `selected="true"`, glow painted in `paintEvent` because QSS has no box-shadow).
-  - Click/Enter = select, double-click = play. Emits `activated(InstanceInfo)` / `selected(InstanceInfo)`.
+  - "Change Card Artwork…" native file picker routes through `PrismBridge::setInstanceCardArtwork`.
+  - Shortcuts: Enter=play, F5=refresh, Escape=clear search/back, L=logs, O=open prism, Menu=card context menu.
+- **`InstanceCard`** (`InstanceCard.h/.cpp`) — painter-drawn 2:3 poster card (Steam Big Picture style).
+  - Artwork priority: instance `slimelauncher/card.png` → Prism icon (center-cropped in memory) → deterministic default poster → painted fallback surface. Never renders empty.
+  - Bottom gradient overlay carries name, `MC <version> · last-played`, and a loader pill with per-loader hue (Fabric/Forge/NeoForge/Quilt, violet for Vanilla/unknown).
+  - Focus (hover, selection, or keyboard) animates a 1.0 → 1.06 scale (`QVariantAnimation`, 140 ms OutCubic) and paints the cyan ring + violet under-glow + ambient halo.
+  - Hover-revealed quick-action strip (▶ play / 🖼 artwork / ✎ edit / ≡ logs) plus a right-click context menu with the same actions. Click/Enter = select, double-click/▶ = play. Emits `selected`, `activated`, `editRequested`, `artworkChangeRequested`, `logsRequested`.
 - **`LogViewer`** (`LogViewer.h/.cpp`) — panel with read-only `QPlainTextEdit` (maximumBlockCount 4000), follow toggle (auto-scroll pauses on manual scroll-up), copy/clear actions, status line.
   - Backed by `PrismBridge::tailLog` watching `latest.log` (and legacy `1.log`). Handles missing-file gracefully ("waiting for log file…").
   - Strictly read-only — no write operations.
@@ -88,13 +102,19 @@ Slime-owned data:
 - **`SideNav`** (`SideNav.h/.cpp`) — left rail: All / Refresh / Open Prism buttons + read-only account chip. Fully gamepad/keyboard navigable via the shared focus model.
 
 ## UI/UX Specifications
-- High-contrast brutalist/minimalist: flat `#0a0a0a` backgrounds, 1px `#262626` hairlines, neon `#39ff14` accent used sparingly (focus, selection, primary CTA).
-- Hard edges everywhere — no `border-radius` on primary surfaces.
-- Hero card ≈ 2× tile height; grid tiles are uniform 220×140.
-- Focus ring = 3px solid neon + painted 8px soft glow; rendered by widgets, never by QSS `outline`.
-- Cards show: name, version flag strip, loader chip, last-played relative time, NOW PLAYING badge.
+- Modern console dashboard: deep charcoal `#0f0f13` background, glassmorphism chrome bars, card surfaces `#1a1a24` with 14px rounded corners.
+- Accent system: electric cyan `#00f0ff` for focus/selection/primary CTA, violet `#8a2be2` as the secondary accent; danger `#ff4d6a`.
+- Poster grid: vertical 2:3 cards (216x324 logical size), responsive 3–8 column flow with 22px gutters.
+- Focus treatment: animated 1.06x scale + painted neon ring (cyan over violet) + ambient halo — rendered by the widget, never by QSS `outline`.
+- Cards show: poster artwork, name, `MC <version> · last played`, loader pill, NOW PLAYING badge, hover quick-action strip.
 - All interactive elements have hover, focus, and pressed states; keyboard and gamepad drive the identical focus model.
-- Light theme: near-white background, near-black text, same neon accent family, same layout.
+- Light theme: near-white background, near-black text, same layout language with muted cyan/violet accents.
+
+## Desktop Integration
+- `packaging/slime-launcher.desktop` ships `Exec=slimelauncher`, `Icon=slime-launcher`, `Categories=Game;Utility;`, `StartupWMClass=slimelauncher`.
+- CMake installs the entry to `share/applications`, hicolor PNG icons (16–256px) + `scalable/slime-launcher.svg` to `share/icons/hicolor`, a `bin/slimelauncher` symlink beside the real binary, and the default cards to `share/slime-launcher/default_cards/`.
+- `main.cpp` exports `QT_APPLICATION_NAME=slimelauncher` so the X11 WM_CLASS matches `StartupWMClass` (correct window matching in Hyprland, KWin, and GNOME).
+- The default posters are also embedded into the binary via `resources.qrc` (`:/cards/…`) so seeding works from a bare build tree or tarball.
 
 ## Error Handling Philosophy
 - Every `PrismBridge` call returns a typed result (value + error string) — never throws across boundaries.

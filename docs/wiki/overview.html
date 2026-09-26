@@ -7,7 +7,7 @@
   <title>Overview - Slime Launcher</title>
   <link rel="icon" href="slime.png" media="(prefers-color-scheme: light)">
     <link rel="icon" href="slime.png" media="(prefers-color-scheme: dark)">
-  <style>:root { --brand-accent: #39ff14; }</style>
+  <style>:root { --brand-accent: #00f0ff; }</style>
   <link rel="stylesheet" href="slime.css">
   <style>
     :root { color-scheme: light dark; }
@@ -73,13 +73,13 @@
     <main>
 <h1 id="slime-launcher">Slime Launcher</h1>
 <p><img src="slime.png" alt="Slime Launcher logo — slime block"></p>
-<p>Slime Launcher is a native <strong>C++20 / Qt 6</strong> controller-navigable frontend for <a href="https://prismlauncher.org">Prism Launcher</a> on Linux. It renders your Prism instance library as a console-style grid — Playnite / Xbox Big Picture style — and routes every launch through Prism's own CLI.</p>
+<p>Slime Launcher is a native <strong>C++20 / Qt 6</strong> controller-navigable frontend for <a href="https://prismlauncher.org">Prism Launcher</a> on Linux. It renders your Prism instance library as a modern console dashboard — rounded 2:3 poster cards with smooth focus animations, in the spirit of Playnite and Steam Big Picture — and routes every launch through Prism's own CLI.</p>
 <p><strong>Prism Launcher is the source of truth.</strong> Slime Launcher reads Prism's metadata and spawns Prism's processes. It never mutates Prism's configuration; see <a href="compatibility-boundaries.html">Compatibility boundaries</a>.</p>
 <p>!!! note Slime Launcher targets <strong>native (non-Flatpak) Prism Launcher</strong> installations. Flatpak is explicitly unsupported — see <a href="installing-prism.html">Installing Prism</a>.</p>
 <h2 id="features">Features</h2>
-<ul><li><strong>Dashboard grid</strong> — instance cards with loader chips (Fabric / Forge / NeoForge / Quilt / Vanilla), game version flags, last-played times, and a live <code>NOW PLAYING</code> state.</li><li><strong>Hero card</strong> — the most recently played instance is pinned at double size.</li><li><strong>Controller navigation</strong> — gamepad-to-focus mapping that shares one focus model with keyboard and mouse.</li><li><strong>Live log viewer</strong> — real-time tail of the selected instance's <code>latest.log</code> with follow mode.</li><li><strong>Setup wizard</strong> — first-run theme selection, automatic Prism path detection with Flatpak rejection, and a read-only account overview.</li><li><strong>Fallback safety</strong> — every advanced operation delegates to the native Prism UI via a dedicated button.</li></ul>
+<ul><li><strong>Poster dashboard</strong> — responsive 2:3 card grid with per-instance artwork, gradient overlays, loader badges (Fabric / Forge / NeoForge / Quilt / Vanilla), game version tags, last-played times, and a live <code>NOW PLAYING</code> state. Focused cards scale up smoothly (1.06x) with a cyan/violet neon ring.</li><li><strong>Artwork pipeline</strong> — each instance gets a <code>slimelauncher/</code> asset folder with a 2:3 <code>card.png</code> (auto-seeded from bundled posters), plus <code>background.png</code> and <code>metadata.json</code>. Custom artwork is center-cropped to exact 2:3 via "Change Card Artwork…".</li><li><strong>Controller navigation</strong> — gamepad-to-focus mapping that shares one focus model with keyboard and mouse.</li><li><strong>Live log viewer</strong> — real-time tail of the selected instance's <code>latest.log</code> with follow mode.</li><li><strong>Setup wizard</strong> — first-run theme selection, automatic Prism path detection with Flatpak rejection, and a read-only account overview.</li><li><strong>Fallback safety</strong> — every advanced operation delegates to the native Prism UI via a dedicated button.</li></ul>
 <h2 id="at-a-glance">At a glance</h2>
-<table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Language</td><td>C++20</td></tr><tr><td>UI framework</td><td>Qt 6 Widgets (no QML)</td></tr><tr><td>Build system</td><td>CMake ≥ 3.22 + Ninja</td></tr><tr><td>Target platform</td><td>Arch Linux (native packages)</td></tr><tr><td>Prism compatibility</td><td>v9.0+</td></tr><tr><td>Memory model</td><td>RAII / Qt parent-child ownership</td></tr></tbody></table>
+<table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Language</td><td>C++20</td></tr><tr><td>UI framework</td><td>Qt 6 Widgets (no QML)</td></tr><tr><td>Build system</td><td>CMake ≥ 3.22 + Ninja</td></tr><tr><td>Target platform</td><td>Linux, native Prism packages</td></tr><tr><td>Prism compatibility</td><td>v9.0+</td></tr><tr><td>Memory model</td><td>RAII / Qt parent-child ownership</td></tr></tbody></table>
 <h2 id="documentation-map">Documentation map</h2>
 <ul><li><strong>Getting started</strong> — building from source, installing Prism natively.</li><li><strong>Architecture</strong> — module map, compatibility boundaries, data ownership.</li><li><strong>Using Slime Launcher</strong> — the setup wizard, controller navigation, log viewer.</li><li><strong>Maintenance</strong> — theming, troubleshooting, editing this wiki.</li></ul>
     </main>

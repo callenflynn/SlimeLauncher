@@ -7,7 +7,7 @@
   <title>Architecture - Slime Launcher</title>
   <link rel="icon" href="slime.png" media="(prefers-color-scheme: light)">
     <link rel="icon" href="slime.png" media="(prefers-color-scheme: dark)">
-  <style>:root { --brand-accent: #39ff14; }</style>
+  <style>:root { --brand-accent: #00f0ff; }</style>
   <link rel="stylesheet" href="slime.css">
   <style>
     :root { color-scheme: light dark; }
@@ -78,18 +78,19 @@
         │
         ▼
    PrismBridge ──── scanInstances() ────► QVector&lt;InstanceCardModel&gt;
-        │                                      │
-        │                                      ▼
-        │                                 DashboardWindow
-        │                                 (card grid + hero)
+        │              │                     │
+        │              ▼                     ▼
+        │        ImageProcessor        DashboardWindow
+        │        (slimelauncher/       (poster card grid,
+        │         card.png seeding)    spatial focus)
         │
         ├── launchInstance(id) ──► prismlauncher --launch &lt;id&gt;
         ├── openPrismUi()      ──► prismlauncher
         └── tailLog(id)        ──► LogTail (QFileSystemWatcher) ──► LogViewer</code></pre></div>
 <h2 id="module-map">Module map</h2>
-<table><thead><tr><th>Module</th><th>Files</th><th>Responsibility</th></tr></thead><tbody><tr><td><code>PrismBridge</code></td><td><code>src/PrismBridge.h/.cpp</code></td><td>Single gateway to Prism data and processes: environment validation, instance scanning, launch routing, log tailing, account reads</td></tr><tr><td><code>GamepadFilter</code></td><td><code>src/GamepadFilter.h/.cpp</code></td><td>Application-wide event filter reading <code>/dev/input/js*</code>, translating to synthetic Qt key events</td></tr><tr><td><code>ThemeManager</code></td><td><code>src/ThemeManager.h/.cpp</code></td><td>Builds the single global QSS string per theme; persists to <code>slime.conf</code></td></tr><tr><td><code>SetupWizard</code></td><td><code>src/SetupWizard.h/.cpp</code></td><td>3-page first-run wizard: theme → paths → accounts</td></tr><tr><td><code>DashboardWindow</code></td><td><code>src/DashboardWindow.h/.cpp</code></td><td>Main window: top bar, SideNav, card grid, control strip, stacked log/error surfaces</td></tr><tr><td><code>InstanceCard</code></td><td><code>src/InstanceCard.h/.cpp</code></td><td>Minimalist tile: name, loader chip, version flags, NOW PLAYING badge, painted focus glow</td></tr><tr><td><code>LogViewer</code></td><td><code>src/LogViewer.h/.cpp</code></td><td>Read-only <code>QPlainTextEdit</code> panel with follow mode</td></tr><tr><td><code>ErrorPanel</code></td><td><code>src/ErrorPanel.h/.cpp</code></td><td>Full-screen failure surface with Retry / Open Prism</td></tr><tr><td><code>SideNav</code></td><td><code>src/SideNav.h/.cpp</code></td><td>Left rail: navigation actions + read-only account chip</td></tr><tr><td><code>Constants</code></td><td><code>src/Constants.h</code></td><td>All user-facing strings, path candidates, QSS object-name registry</td></tr></tbody></table>
+<table><thead><tr><th>Module</th><th>Files</th><th>Responsibility</th></tr></thead><tbody><tr><td><code>PrismBridge</code></td><td><code>src/PrismBridge.h/.cpp</code></td><td>Single gateway to Prism data and processes: environment validation, instance scanning, launch routing, log tailing, account reads, artwork-import routing</td></tr><tr><td><code>GamepadFilter</code></td><td><code>src/GamepadFilter.h/.cpp</code></td><td>Application-wide event filter reading <code>/dev/input/js*</code>, translating to synthetic Qt key events</td></tr><tr><td><code>ImageProcessor</code></td><td><code>src/ImageProcessor.h/.cpp</code></td><td>2:3 center-crop engine (300x450–600x900 px), <code>slimelauncher/</code> asset-folder provisioning, deterministic default-card seeding, custom artwork import, <code>metadata.json</code> writes</td></tr><tr><td><code>SetupWizard</code></td><td><code>src/SetupWizard.h/.cpp</code></td><td>3-page first-run wizard: theme → paths → accounts</td></tr><tr><td><code>DashboardWindow</code></td><td><code>src/DashboardWindow.h/.cpp</code></td><td>Main window: glass top bar, SideNav, responsive poster grid with spatial navigation, control strip, stacked log/error surfaces</td></tr><tr><td><code>InstanceCard</code></td><td><code>src/InstanceCard.h/.cpp</code></td><td>Painter-drawn 2:3 poster card: artwork, gradient overlay, loader pill, NOW PLAYING badge, animated focus ring, quick-action strip</td></tr><tr><td><code>LogViewer</code></td><td><code>src/LogViewer.h/.cpp</code></td><td>Read-only <code>QPlainTextEdit</code> panel with follow mode</td></tr><tr><td><code>ErrorPanel</code></td><td><code>src/ErrorPanel.h/.cpp</code></td><td>Full-screen failure surface with Retry / Open Prism</td></tr><tr><td><code>SideNav</code></td><td><code>src/SideNav.h/.cpp</code></td><td>Left rail: navigation actions + read-only account chip</td></tr><tr><td><code>Constants</code></td><td><code>src/Constants.h</code></td><td>All user-facing strings, path candidates, QSS object-name registry</td></tr></tbody></table>
 <h2 id="key-invariants">Key invariants</h2>
-<ol><li><strong>Widgets never spawn processes.</strong> Every <code>QProcess</code> call lives in <code>PrismBridge</code>.</li><li><strong>Widgets never parse Prism files.</strong> They receive <code>InstanceCardModel</code> structs.</li><li><strong>No exceptions across module boundaries.</strong> Operations return <code>OpResult { ok, error }</code>.</li><li><strong>One stylesheet.</strong> All colors live in <code>ThemeManager::buildQss()</code>; widgets reference stable object names (<code>#InstanceCard</code>, <code>#PrimaryButton</code>, …).</li><li><strong>RAII ownership.</strong> Qt parent-child ownership or C++ members; no unowned raw <code>new</code>.</li></ol>
+<ol><li><strong>Widgets never spawn processes.</strong> Every <code>QProcess</code> call lives in <code>PrismBridge</code>.</li><li><strong>Widgets never parse Prism files.</strong> They receive <code>InstanceCardModel</code> structs.</li><li><strong>No exceptions across module boundaries.</strong> Operations return <code>OpResult { ok, error }</code>.</li><li><strong>One stylesheet.</strong> All colors live in <code>ThemeManager::buildQss()</code>; widgets reference stable object names (<code>#InstanceCard</code>, <code>#PrimaryButton</code>, …).</li><li><strong>RAII ownership.</strong> Qt parent-child ownership or C++ members; no unowned raw <code>new</code>.</li><li><strong>One write path into instances.</strong> Image files only ever land in <code>&lt;instance&gt;/slimelauncher/</code>, via <code>ImageProcessor</code>.</li></ol>
 <h2 id="threading-model">Threading model</h2>
 <p>Everything runs on the GUI thread. Disk parsing is short (INI + one small JSON per instance) and scans run on demand (F5). Process spawns are detached; log tailing is event-driven via <code>QFileSystemWatcher</code>, so no polling loops or worker threads exist.</p>
 <h2 id="startup-sequence">Startup sequence</h2>
@@ -100,8 +101,8 @@
  │    └─ yes → apply theme QSS
  ├─ install GamepadFilter
  └─ DashboardWindow
-      ├─ PrismBridge::scanInstances()
-      ├─ rebuild card grid (hero = most recently played)
+      ├─ PrismBridge::scanInstances() (provisions slimelauncher/ assets)
+      ├─ rebuild poster grid (selects most recently played)
       └─ event loop</code></pre></div>
     </main>
   </div>

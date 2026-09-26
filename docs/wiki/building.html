@@ -7,7 +7,7 @@
   <title>Building - Slime Launcher</title>
   <link rel="icon" href="slime.png" media="(prefers-color-scheme: light)">
     <link rel="icon" href="slime.png" media="(prefers-color-scheme: dark)">
-  <style>:root { --brand-accent: #39ff14; }</style>
+  <style>:root { --brand-accent: #00f0ff; }</style>
   <link rel="stylesheet" href="slime.css">
   <style>
     :root { color-scheme: light dark; }
@@ -90,7 +90,8 @@ cppcheck --enable=warning,performance,portability src</code></pre></div>
 <h2 id="install">Install</h2>
 <div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-bash">cmake --install build --prefix /usr</code></pre></div>
 <p>This installs:</p>
-<ul><li><code>/usr/bin/slime-launcher</code> — the binary</li><li><code>/usr/share/applications/slime-launcher.desktop</code> — desktop entry</li></ul>
+<ul><li><code>/usr/bin/slime-launcher</code> — the binary (plus a <code>/usr/bin/slimelauncher</code> symlink matching the desktop entry's <code>Exec=</code>)</li><li><code>/usr/share/applications/slime-launcher.desktop</code> — desktop entry (<code>StartupWMClass=slimelauncher</code>), registered by GNOME App Grid, KDE Application Launcher, Rofi, dmenu, and Hyprland app launchers</li><li><code>/usr/share/icons/hicolor/&lt;size&gt;x&lt;size&gt;/apps/slime-launcher.png</code> — app icons from 16px up to 256px, plus <code>scalable/slime-launcher.svg</code></li><li><code>/usr/share/slime-launcher/default_cards/</code> — the bundled default poster cards</li></ul>
+<p>For a user-local install (no root), use <code>--prefix ~/.local</code>, which puts the entry in <code>~/.local/share/applications</code> and the icons in <code>~/.local/share/icons/hicolor</code>.</p>
 <h2 id="toolchain-notes-for-other-distros">Toolchain notes for other distros</h2>
 <p>The project targets Arch but builds anywhere Qt 6 and a C++20 compiler exist:</p>
 <table><thead><tr><th>Distro</th><th>Packages</th></tr></thead><tbody><tr><td>Debian / Ubuntu 24.04+</td><td><code>cmake ninja-build qt6-base-dev g++</code></td></tr><tr><td>Fedora</td><td><code>cmake ninja-build qt6-qtbase-devel gcc-c++</code></td></tr></tbody></table>

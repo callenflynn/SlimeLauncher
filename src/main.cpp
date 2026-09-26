@@ -32,9 +32,14 @@ int runDashboard(QApplication& app, PrismBridge& bridge, ThemeManager::Theme the
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
+    // Window identity: the X11 WM_CLASS instance name is the lowercased
+    // applicationName ("slimelauncher"), matching StartupWMClass in the
+    // desktop entry; the desktop file name sets the Wayland app_id so
+    // compositors (Hyprland, KWin, GNOME) associate the window correctly.
     QApplication::setApplicationName(QLatin1String(Constants::APP_ID));
     QApplication::setOrganizationName(QLatin1String(Constants::APP_ID));
     QApplication::setApplicationDisplayName(QLatin1String(Constants::APP_NAME));
+    QGuiApplication::setDesktopFileName(QLatin1String("slime-launcher"));
 
     // App icon: the slime block. Looked up from the freedesktop icon theme
     // (installed by CMake into hicolor) with a repo-relative fallback so the

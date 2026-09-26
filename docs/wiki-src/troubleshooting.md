@@ -26,6 +26,9 @@ Launch the native Prism Launcher once — it creates `~/.local/share/PrismLaunch
 **Grid is empty but Prism shows instances.**
 Press `F5` to force a re-scan. If still empty, confirm the *InstancesDir* in `~/.config/SlimeLauncher/slime.conf` points at the directory that actually contains your instances. Every instance must have an `instance.cfg` — directories without one are skipped by design.
 
+**A card shows the wrong artwork, or you want your own.**
+Right-click the card (or press the Menu key on it) and choose **Change Card Artwork…**. Any PNG/JPG/WebP is accepted — it is center-cropped to an exact 2:3 poster (300x450–600x900 px) and saved to `<instance>/slimelauncher/card.png`. To re-roll the default art instead, delete that file and press `F5`; a bundled poster is re-seeded deterministically.
+
 **"NOW PLAYING" never appears.**
 The badge is a heuristic: `latest.log` modified within the last 90 seconds. If Prism writes logs elsewhere (custom data root), the card cannot know — this is cosmetic only and never affects launching.
 
@@ -74,4 +77,4 @@ printf '{"components":[{"uid":"net.minecraft","version":"1.21.4"}]}' \
 SMOKE_HOME=/tmp/smoke QT_QPA_PLATFORM=offscreen ./build/bin/prism-bridge-smoke
 ```
 
-Expected output ends with `ALL CHECKS PASSED` — it validates empty-environment rejection, environment validation, instance parsing, CLI launch routing, and live log tailing.
+Expected output ends with `ALL CHECKS PASSED` — it validates empty-environment rejection, environment validation, instance parsing (including `slimelauncher/` asset provisioning and the 2:3 crop engine), CLI launch routing, and live log tailing.

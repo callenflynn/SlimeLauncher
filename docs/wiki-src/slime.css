@@ -18,10 +18,11 @@
   image-rendering: auto;
 }
 
-/* Slightly sharpen the neon accent used by links and the active nav item. */
+/* Electric-cyan accent used by links and the active nav item, matching the
+   console dashboard's focus color. */
 html[data-theme="dark"] .nsdocs-nav a.active {
-  background: #39ff14;
-  color: #0a0a0a;
+  background: #00f0ff;
+  color: #0a0a0e;
 }
 
 /* Constrain inline content images (the logo on the overview page). */

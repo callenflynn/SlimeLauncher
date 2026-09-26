@@ -50,8 +50,12 @@ cmake --install build --prefix /usr
 
 This installs:
 
-- `/usr/bin/slime-launcher` — the binary
-- `/usr/share/applications/slime-launcher.desktop` — desktop entry
+- `/usr/bin/slime-launcher` — the binary (plus a `/usr/bin/slimelauncher` symlink matching the desktop entry's `Exec=`)
+- `/usr/share/applications/slime-launcher.desktop` — desktop entry (`StartupWMClass=slimelauncher`), registered by GNOME App Grid, KDE Application Launcher, Rofi, dmenu, and Hyprland app launchers
+- `/usr/share/icons/hicolor/<size>x<size>/apps/slime-launcher.png` — app icons from 16px up to 256px, plus `scalable/slime-launcher.svg`
+- `/usr/share/slime-launcher/default_cards/` — the bundled default poster cards
+
+For a user-local install (no root), use `--prefix ~/.local`, which puts the entry in `~/.local/share/applications` and the icons in `~/.local/share/icons/hicolor`.
 
 ## Toolchain notes for other distros
 

@@ -299,6 +299,9 @@ QVector<InstanceCardModel> PrismBridge::scanInstances(QString* errorOut) const {
         if (info.id.isEmpty()) {
             continue;  // not a Prism instance directory
         }
+        // Provision the Slime-owned asset folder: auto-create slimelauncher/,
+        // seed a deterministic default poster when no card.png exists yet.
+        info.cardPath = ImageProcessor::ensureAssets(dir, info);
         results.append(info);
     }
 
@@ -453,6 +456,20 @@ QVector<AccountInfo> PrismBridge::readAccounts() const {
         accounts.append(acc);
     }
     return accounts;
+}
+
+OpResult PrismBridge::setInstanceCardArtwork(const QString& instanceId, const QString& sourceImagePath) {
+    if (m_instancesDir.isEmpty()) {
+        return OpResult::fail(QLatin1String("Instances directory is not configured."));
+    }
+    if (instanceId.contains(QLatin1Char('/')) || instanceId.contains(QLatin1String(".."))) {
+        return OpResult::fail(QLatin1String("Invalid instance id."));
+    }
+    QString error;
+    if (!ImageProcessor::importCardArtwork(m_instancesDir, instanceId, sourceImagePath, &error)) {
+        return OpResult::fail(error.isEmpty() ? QLatin1String(Constants::MSG_ARTWORK_FAILED) : error);
+    }
+    return OpResult::success();
 }
 
 OpResult PrismBridge::launchInstance(const QString& id) {

@@ -7,7 +7,7 @@
   <title>Compatibility boundaries - Slime Launcher</title>
   <link rel="icon" href="slime.png" media="(prefers-color-scheme: light)">
     <link rel="icon" href="slime.png" media="(prefers-color-scheme: dark)">
-  <style>:root { --brand-accent: #39ff14; }</style>
+  <style>:root { --brand-accent: #00f0ff; }</style>
   <link rel="stylesheet" href="slime.css">
   <style>
     :root { color-scheme: light dark; }
@@ -76,7 +76,8 @@
 <h2 id="1-prism-as-source-of-truth">1. Prism as source of truth</h2>
 <p>Slime Launcher is a <strong>frontend and orchestration interface only</strong>. The local Prism directory configuration and instance metadata are authoritative. If Prism's data and Slime's view ever disagree, Prism wins: press <code>F5</code> and Slime re-reads everything from disk.</p>
 <h2 id="2-read-vs-write-rules">2. Read vs. write rules</h2>
-<table><thead><tr><th>Data</th><th>Read</th><th>Write</th></tr></thead><tbody><tr><td><code>instances/*/instance.cfg</code></td><td>✔ <code>QSettings</code> IniFormat</td><td><strong>never</strong></td></tr><tr><td><code>instances/*/mmc-pack.json</code></td><td>✔ <code>QJsonDocument</code></td><td><strong>never</strong></td></tr><tr><td><code>instances/*/.minecraft/logs/latest.log</code></td><td>✔ tail only</td><td><strong>never</strong></td></tr><tr><td><code>accounts.json</code></td><td>✔ display only</td><td><strong>never</strong></td></tr><tr><td><code>icons/*</code></td><td>✔</td><td><strong>never</strong></td></tr><tr><td><code>prismlauncher.cfg</code> (Prism global config)</td><td>not even read</td><td><strong>never</strong></td></tr><tr><td><code>~/.config/SlimeLauncher/slime.conf</code></td><td>✔</td><td>✔ (the <strong>only</strong> file Slime writes)</td></tr></tbody></table>
+<table><thead><tr><th>Data</th><th>Read</th><th>Write</th></tr></thead><tbody><tr><td><code>instances/*/instance.cfg</code></td><td>✔ <code>QSettings</code> IniFormat</td><td><strong>never</strong></td></tr><tr><td><code>instances/*/mmc-pack.json</code></td><td>✔ <code>QJsonDocument</code></td><td><strong>never</strong></td></tr><tr><td><code>instances/*/.minecraft/logs/latest.log</code></td><td>✔ tail only</td><td><strong>never</strong></td></tr><tr><td><code>accounts.json</code></td><td>✔ display only</td><td><strong>never</strong></td></tr><tr><td><code>icons/*</code></td><td>✔</td><td><strong>never</strong></td></tr><tr><td><code>prismlauncher.cfg</code> (Prism global config)</td><td>not even read</td><td><strong>never</strong></td></tr><tr><td><code>instances/*/slimelauncher/**</code></td><td>✔ (Slime's own asset folder)</td><td>✔ (the only path Slime writes inside an instance)</td></tr><tr><td><code>~/.config/SlimeLauncher/slime.conf</code></td><td>✔</td><td>✔ (theme + validated paths)</td></tr></tbody></table>
+<p>The <code>slimelauncher/</code> folder is Slime-owned storage for per-instance poster artwork (<code>card.png</code>), optional wallpapers (<code>background.png</code>), and display metadata (<code>metadata.json</code>). It is created automatically on scan and is ignored by Prism. Outside <code>slimelauncher/</code>, no instance file is ever written. See <a href="data-ownership.html">Data ownership</a> for the exact contents.</p>
 <p><code>slime.conf</code> stores exactly three keys: <code>General/Theme</code>, <code>General/BinaryPath</code>, <code>General/InstancesDir</code>. It is written once per wizard completion and never during normal operation.</p>
 <h2 id="3-execution-routing-via-cli">3. Execution routing via CLI</h2>
 <p>All launch operations route through Prism's standard CLI backend, spawned asynchronously:</p>

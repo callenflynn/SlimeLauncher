@@ -3,4 +3,11 @@
     <qresource>
         <file alias="icons/slime.png">../assets/slime.png</file>
     </qresource>
+    <qresource prefix="/cards">
+        <file alias="card1.png">../assets/default_cards/card1.png</file>
+        <file alias="card2.png">../assets/default_cards/card2.png</file>
+        <file alias="card3.jpg">../assets/default_cards/card3.jpg</file>
+        <file alias="card4.jpg">../assets/default_cards/card4.jpg</file>
+        <file alias="card5.jpg">../assets/default_cards/card5.jpg</file>
+    </qresource>
 </RCC>

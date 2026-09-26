@@ -21,7 +21,10 @@ Slime Launcher is a **frontend and orchestration interface only**. The local Pri
 | `accounts.json` | ✔ display only | **never** |
 | `icons/*` | ✔ | **never** |
 | `prismlauncher.cfg` (Prism global config) | not even read | **never** |
-| `~/.config/SlimeLauncher/slime.conf` | ✔ | ✔ (the **only** file Slime writes) |
+| `instances/*/slimelauncher/**` | ✔ (Slime's own asset folder) | ✔ (the only path Slime writes inside an instance) |
+| `~/.config/SlimeLauncher/slime.conf` | ✔ | ✔ (theme + validated paths) |
+
+The `slimelauncher/` folder is Slime-owned storage for per-instance poster artwork (`card.png`), optional wallpapers (`background.png`), and display metadata (`metadata.json`). It is created automatically on scan and is ignored by Prism. Outside `slimelauncher/`, no instance file is ever written. See [Data ownership](data-ownership.html) for the exact contents.
 
 `slime.conf` stores exactly three keys: `General/Theme`, `General/BinaryPath`, `General/InstancesDir`. It is written once per wizard completion and never during normal operation.
 

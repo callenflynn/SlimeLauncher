@@ -11,8 +11,8 @@ The wizard runs on first launch (when `slime.conf` has no validated paths yet) a
 
 Two preview swatches rendered in their own theme colors:
 
-- **DARK** (default) — `#0a0a0a` base, `#39ff14` neon accents
-- **LIGHT** — `#fafafa` base, full contrast, `#2ea80a` accent
+- **DARK** (default) — `#0f0f13` charcoal base, `#00f0ff` electric-cyan accents
+- **LIGHT** — `#f4f5f9` base, full contrast, `#6a1fb8` violet accent
 
 Selection applies the global QSS immediately, so the rest of the wizard previews your choice. The choice persists when you finish.
 

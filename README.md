@@ -2,14 +2,15 @@
 
 <img src="assets/slime.png" alt="Slime Launcher logo — slime block" width="140" />
 
-A native C++20 / Qt 6 controller-navigable launcher frontend for **native (non-Flatpak) Prism Launcher** on Arch Linux. Console-style UI (Playnite / Xbox Big Picture inspired), high-contrast brutalist/minimalist aesthetic, tiny footprint.
+A native C++20 / Qt 6 controller-navigable launcher frontend for **native (non-Flatpak) Prism Launcher** on Linux. Console-style dashboard UI (Playnite / Steam Big Picture inspired): rounded 2:3 poster cards, electric-cyan focus glows, ambient charcoal surfaces — with a tiny footprint.
 
 **Prism Launcher is the source of truth.** Slime Launcher reads Prism's instance metadata and routes all launches through Prism's CLI. It never mutates Prism data.
 
 ## Features
 
-- **Setup wizard** — theme selection (dark default `#0a0a0a` + neon `#39ff14`, light alternative), automatic detection of native Prism installs with explicit Flatpak rejection, read-only account overview.
-- **Dashboard** — instance card grid with hero card (most recently played), loader chips (Fabric/Forge/NeoForge/Quilt/Vanilla), version flags, last-played times, NOW PLAYING state.
+- **Setup wizard** — theme selection (dark default `#0f0f13` charcoal + neon `#00f0ff`, light alternative), automatic detection of native Prism installs with explicit Flatpak rejection, read-only account overview.
+- **Poster dashboard** — responsive 2:3 card grid with per-instance artwork, dark gradient overlays, loader badges (Fabric/Forge/NeoForge/Quilt/Vanilla), version tags, last-played times, and a live `NOW PLAYING` state. Cards scale up smoothly (1.06x) with a neon focus ring on hover/keyboard/gamepad focus.
+- **Artwork pipeline** — every instance gets an auto-created `slimelauncher/` asset folder (`card.png`, `background.png`, `metadata.json`). Missing posters are seeded from bundled default art; custom images are center-cropped to exact 2:3 (300x450–600x900 px) via "Change Card Artwork…" in the card context menu.
 - **Controller navigation** — gamepad → focus mapping via `/dev/input/js*` (A=select, B=back, X/Start=refresh, D-pad/stick=arrows) sharing one focus model with keyboard and mouse.
 - **Log viewer** — live tail of the selected instance's `latest.log` with follow-mode, copy, and rotation handling.
 - **Fallback safety** — every advanced operation (account sign-in, deep instance editing) delegates to the native Prism UI via a dedicated button.
@@ -34,8 +35,10 @@ cmake --build build
 ## Install
 
 ```bash
-cmake --install build --prefix /usr   # binary + .desktop entry
+cmake --install build --prefix /usr   # binary, .desktop entry, hicolor icons, default cards
 ```
+
+The install step ships `share/applications/slime-launcher.desktop` (registered by GNOME App Grid, KDE Application Launcher, Rofi, dmenu, Hyprland app launchers), `bin/slimelauncher` (matching `Exec=slimelauncher` / `StartupWMClass=slimelauncher`), hicolor app icons up to 256px plus a scalable SVG, and the default poster cards.
 
 ## Requirements
 

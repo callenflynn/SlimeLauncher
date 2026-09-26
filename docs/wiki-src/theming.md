@@ -5,26 +5,29 @@ description: QSS system, color tokens, and the object-name registry
 
 # Theming
 
-All styling flows through **one** QSS string per theme, built by `ThemeManager::buildQss()` and applied globally via `qApp->setStyleSheet()`. Widgets contain no colors of their own (the only exceptions are the painted focus glow in `InstanceCard::paintEvent` and fixed swatch previews in the wizard).
+All styling flows through **one** QSS string per theme, built by `ThemeManager::buildQss()` and applied globally via `qApp->setStyleSheet()`. Widgets contain no colors of their own (the only exceptions are the painted focus ring, glow, and gradient overlay in `InstanceCard::paintEvent`, and fixed swatch previews in the wizard).
 
 ## Color tokens
 
 | Token | Dark | Light |
 |---|---|---|
-| `BG` | `#0a0a0a` | `#fafafa` |
-| `SURFACE` | `#141414` | `#ffffff` |
-| `SURFACE2` | `#1a1a1a` | `#f0f0f0` |
-| `LINE` | `#262626` | `#d4d4d4` |
-| `TEXT` | `#f2f2f2` | `#111111` |
-| `MUTED` | `#8a8a8a` | `#666666` |
-| `ACCENT` | `#39ff14` | `#2ea80a` |
-| Danger | `#8b0000` | `#8b0000` |
+| `BG` | `#0f0f13` | `#f4f5f9` |
+| `SURFACE` | `#1a1a24` | `#ffffff` |
+| `SURFACE2` | `#222230` | `#e9eaf2` |
+| `LINE` | `#2a2a38` | `#d5d7e2` |
+| `TEXT` | `#f2f4f8` | `#15161c` |
+| `MUTED` | `#9a9eb0` | `#5c5f70` |
+| `ACCENT` | `#00f0ff` | `#0090a8` |
+| `ACCENT2` (violet) | `#8a2be2` | `#6a1fb8` |
+| Danger | `#ff4d6a` | `#d9264a` |
 
 Design rules:
 
-- Flat surfaces, **hard edges** — no `border-radius` on primary surfaces (brutalist aesthetic)
-- Accent is used sparingly: focus rings, primary CTA, `NOW PLAYING` badge
+- **Rounded console surfaces** — 14px corner radius on cards, 10px on buttons/inputs/menus (the old hard-edge brutalist look is retired)
+- Deep charcoal background with glassmorphism chrome: translucent top/bottom bars (`rgba(26, 26, 36, 0.72)` in dark) floating over the content
+- Electric cyan is the focus/selection color; violet appears as the secondary accent (ring under-glow, loader pills)
 - 1px hairlines separate regions; panels alternate `BG` / `SURFACE` for depth
+- The same tokens are mirrored as `Constants::COLOR_*` values for painter-drawn surfaces — `ThemeManager` (QSS) and `Constants.h` (painting) must stay in sync
 
 ## Object-name registry
 
@@ -32,21 +35,23 @@ QSS keys on `setObjectName`, not class names. These names are a stable contract 
 
 | Object name | Used by |
 |---|---|
-| `InstanceCard` | Grid tile frame |
-| `HeroCard` | Double-size featured tile |
+| `InstanceCard` | Poster card (fully painter-drawn; QSS only keeps its background transparent) |
+| `HeroCard` | Legacy alias kept transparent for compatibility |
 | `SlimeButton` | Base button styling |
-| `PrimaryButton` | Neon accent CTA (Play, Validate, Retry) |
+| `PrimaryButton` | Cyan accent CTA (Play, Validate, Retry) |
 | `DangerButton` | Destructive actions |
 | `SideNav` | Left navigation rail |
 | `LogView` | Log `QPlainTextEdit` (monospace) |
 | `StatusChip` | Loader chips and account chip |
+| `TopBar` / `BottomBar` | Glass chrome bars |
+| `SearchField` | Rounded pill search input |
 
 ## State styling
 
-- **Hover** — CSS `:hover`
-- **Selection** — dynamic property: `QFrame#InstanceCard[selected="true"]` → 3px accent ring + painted glow
-- **Playing** — dynamic property `playing` drives the `NOW PLAYING` badge
-- **Focus** — `:focus` → 3px accent border on buttons and inputs
+- **Hover** — CSS `:hover` on buttons/inputs; cards animate a 1.0 → 1.06 scale via `QVariantAnimation`
+- **Selection / focus** — `InstanceCard::paintEvent` renders the neon ring (cyan stroke + violet under-glow) and ambient radial halo; buttons use a 2px accent border via `:focus`
+- **Playing** — `InstanceCardModel::playing` drives the `NOW PLAYING` pill
+- **Quick actions** — hovering a focused card reveals the Play / Change Artwork / Edit / Logs strip
 
 ## Adding a theme
 

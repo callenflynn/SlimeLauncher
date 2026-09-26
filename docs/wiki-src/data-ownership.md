@@ -13,6 +13,7 @@ description: Which files Prism owns, which Slime owns, and what Slime reads
 │   └── <id>/                            ← directory name = CLI launch id
 │       ├── instance.cfg                 ← name, iconKey, lastLaunchTime   [read-only to Slime]
 │       ├── mmc-pack.json                ← components: loader + game ver   [read-only to Slime]
+│       ├── slimelauncher/               ← Slime-owned asset folder (see below)
 │       └── .minecraft/
 │           └── logs/latest.log          ← live tail target                [read-only to Slime]
 ├── accounts.json                        ← MS account sessions             [read-only to Slime]
@@ -25,14 +26,45 @@ description: Which files Prism owns, which Slime owns, and what Slime reads
 | File | Keys used | Purpose |
 |---|---|---|
 | `instance.cfg` | `name`, `iconKey`, `lastLaunchTime` | Card title, icon, last-played time (both flat and `[General]`-section spellings accepted) |
-| `mmc-pack.json` | `components[].uid`, `components[].version` | Loader chip (`net.fabricmc.*` → Fabric, etc.) and `net.minecraft` version |
+| `mmc-pack.json` | `components[].uid`, `components[].version` | Loader badge (`net.fabricmc.*` → Fabric, etc.) and `net.minecraft` version |
 | `accounts.json` | `name`, `type`, `lastSync` | Read-only account chip in the SideNav |
 | `latest.log` | — | Live tail for the log viewer; mtime recency drives the `NOW PLAYING` heuristic |
 
-## Slime-owned
+## Slime-owned inside an instance: `slimelauncher/`
+
+Each instance directory contains a Slime-owned asset folder, auto-created on scan:
 
 ```text
-~/.config/SlimeLauncher/slime.conf       ← the ONLY file Slime writes
+instances/<id>/slimelauncher/
+├── card.png          ← 2:3 poster cover (exact 2*width = 3*height, 300x450–600x900 px)
+├── background.png    ← optional hero wallpaper (reserved; not yet rendered)
+└── metadata.json     ← display overrides
+```
+
+`metadata.json` records how the card was produced:
+
+```json
+{
+    "artwork": "default | custom",
+    "source": "default poster 3 | original-file-name.png",
+    "updated": "2026-09-25T21:04:10.512Z"
+}
+```
+
+Provisioning rules (`src/ImageProcessor.cpp`):
+
+1. `ensureAssets()` creates the folder if missing.
+2. If no `card.png` exists, a **deterministic** default poster is picked (SHA-256 of the instance id modulo the five bundled cards) — stable across rescans, so cards never reshuffle.
+3. The chosen image passes through the center-crop engine (`Qt::KeepAspectRatioByExpanding` semantics, then a final exact-2:3 pin) and is written as PNG.
+4. "Change Card Artwork…" overwrites `card.png` with a user-selected image and flips metadata to `artwork: custom`.
+5. Nothing outside `slimelauncher/` is ever written inside an instance.
+
+Prism ignores this folder entirely — it is not a Prism config file, and no Prism key collides with it.
+
+## Slime-owned outside Prism
+
+```text
+~/.config/SlimeLauncher/slime.conf       ← theme + validated Prism paths
 ```
 
 Contents:

@@ -19,10 +19,12 @@ class QVBoxLayout;
 class QHBoxLayout;
 class QPushButton;
 class ErrorPanel;
+class QResizeEvent;
 
-// Console-style main window: top bar (title/search/clock), SideNav, instance
-// card grid with a hero card, bottom control strip (Play / Logs / Open Prism),
-// and an ErrorPanel stacked over the dashboard for fatal-path recovery.
+// Console-style main window: ambient charcoal background, glass top bar
+// (title / search / clock), SideNav, poster-card grid with spatial D-pad
+// navigation, bottom control strip (Play / Logs / Open Prism), and an
+// ErrorPanel stacked over the dashboard for fatal-path recovery.
 class DashboardWindow : public QMainWindow {
     Q_OBJECT
 
@@ -34,17 +36,23 @@ public:
 
 protected:
     void keyPressEvent(QKeyEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override;
 
 private:
     void buildUi();
     void rebuildGrid(const QVector<InstanceCardModel>& instances);
     void clearGrid();
+    void applyFilter(const QString& text);
     void setSelectedInstance(const InstanceCardModel& info);
     void playSelected();
     void openLogs();
     void openPrism();
+    void changeArtworkFor(const InstanceCardModel& info);
     void updateDetailPanel();
     void updateClock();
+    void moveGridFocus(int key);
+    int gridColumns() const;
+    InstanceCard* cardForId(const QString& id) const;
 
     PrismBridge* m_bridge;
     InstanceCardModel m_selected;

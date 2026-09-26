@@ -28,27 +28,27 @@ QWizardPage* SetupWizard::createThemePage() {
     layout->setSpacing(14);
 
     auto* intro = new QLabel(
-        QLatin1String("Dark is the default: deep blacks with high-contrast neon highlights. "
+        QLatin1String("Dark is the default: deep charcoal with electric-cyan focus glows. "
                       "Light mode is a full-contrast alternative. You can change this later."),
         page);
     intro->setWordWrap(true);
 
     auto* row = new QHBoxLayout();
-    m_darkButton = new QPushButton(QLatin1String("DARK\n#0a0a0a base\nneon #39ff14 accents"), page);
+    m_darkButton = new QPushButton(QLatin1String("DARK\n#0f0f13 base\nneon #00f0ff accents"), page);
     m_darkButton->setMinimumSize(220, 140);
     m_darkButton->setCheckable(true);
     m_darkButton->setChecked(true);
     m_darkButton->setStyleSheet(
-        QStringLiteral("QPushButton { background: #0a0a0a; color: #f2f2f2; border: 3px solid #39ff14; "
-                       "font-weight: 800; text-align: center; padding: 12px; }"));
+        QStringLiteral("QPushButton { background: #0f0f13; color: #f2f4f8; border: 3px solid #00f0ff; "
+                       "border-radius: 12px; font-weight: 800; text-align: center; padding: 12px; }"));
 
-    m_lightButton = new QPushButton(QLatin1String("LIGHT\n#fafafa base\nfull contrast"), page);
+    m_lightButton = new QPushButton(QLatin1String("LIGHT\n#f4f5f9 base\nfull contrast"), page);
     m_lightButton->setMinimumSize(220, 140);
     m_lightButton->setCheckable(true);
     m_lightButton->setStyleSheet(
-        QStringLiteral("QPushButton { background: #fafafa; color: #111111; border: 3px solid #d4d4d4; "
-                       "font-weight: 800; text-align: center; padding: 12px; }"
-                       "QPushButton:checked { border-color: #2ea80a; }"));
+        QStringLiteral("QPushButton { background: #f4f5f9; color: #15161c; border: 3px solid #d5d7e2; "
+                       "border-radius: 12px; font-weight: 800; text-align: center; padding: 12px; }"
+                       "QPushButton:checked { border-color: #6a1fb8; }"));
 
     row->addWidget(m_darkButton);
     row->addWidget(m_lightButton);
@@ -170,12 +170,12 @@ void SetupWizard::runValidation() {
 void SetupWizard::applyValidation(const EnvValidation& result) {
     m_validated = result;
     if (result.ok) {
-        m_validationResult->setStyleSheet(QStringLiteral("color: #39ff14; font-size: 12px; font-weight: 700;"));
+        m_validationResult->setStyleSheet(QStringLiteral("color: #00f0ff; font-size: 12px; font-weight: 700;"));
         m_validationResult->setText(QStringLiteral("OK  •  %1\n%2").arg(result.binaryPath, result.instancesDir));
         return;
     }
     if (result.flatpakDetected) {
-        m_validationResult->setStyleSheet(QStringLiteral("color: #ff3b3b; font-size: 12px;"));
+        m_validationResult->setStyleSheet(QStringLiteral("color: #ff4d6a; font-size: 12px;"));
     } else {
         m_validationResult->setStyleSheet(QStringLiteral("color: #ff9f1c; font-size: 12px;"));
     }

@@ -1,15 +1,41 @@
 // Headless integration smoke test: drives PrismBridge against a fake Prism
 // environment to verify environment validation, instance parsing, accounts,
-// log tailing, and CLI launch routing. Not linked into the shipped binary.
+// log tailing, CLI launch routing, and the slimelauncher/ image pipeline.
+// Not linked into the shipped binary.
 #include "PrismBridge.h"
 
 #include <QCoreApplication>
 #include <QDir>
 #include <QEventLoop>
 #include <QFile>
+#include <QFileInfo>
+#include <QImage>
+#include <QImageReader>
 #include <QTimer>
 
 #include <cstdio>
+
+namespace {
+
+bool cardHasPostageStamp(const QString& path) {
+    QImageReader reader(path);
+    reader.setAutoTransform(true);
+    const QImage img = reader.read();
+    if (img.isNull()) {
+        std::fprintf(stderr, "FAIL: cannot decode card asset %s\n", path.toUtf8().constData());
+        return false;
+    }
+    // 2:3 window: min 300x450, max 600x900.
+    if (img.width() < 300 || img.height() < 450 || img.width() > 600 || img.height() > 900 ||
+        img.width() * 3 != img.height() * 2) {
+        std::fprintf(stderr, "FAIL: card asset %s is %dx%d, outside the 2:3 window\n",
+                     path.toUtf8().constData(), img.width(), img.height());
+        return false;
+    }
+    return true;
+}
+
+}  // namespace
 
 int main(int argc, char* argv[]) {
     QCoreApplication app(argc, argv);
@@ -68,6 +94,49 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    // 4b. Asset pipeline: slimelauncher/ folder must exist with a valid
+    // 2:3 card.png and a metadata.json marking the default artwork.
+    {
+        const QString slimeDir = home + "/data/instances/creative-world/slimelauncher";
+        const QString card = slimeDir + "/card.png";
+        const QString metadata = slimeDir + "/metadata.json";
+        if (!QDir(slimeDir).exists() || !QFileInfo::exists(card) || !QFileInfo::exists(metadata)) {
+            std::fprintf(stderr, "FAIL: slimelauncher/ assets were not provisioned\n");
+            return 1;
+        }
+        if (!cardHasPostageStamp(card)) {
+            return 1;
+        }
+        QFile metaFile(metadata);
+        if (!metaFile.open(QIODevice::ReadOnly) ||
+            !QString::fromUtf8(metaFile.readAll()).contains("\"artwork\": \"default\"")) {
+            std::fprintf(stderr, "FAIL: metadata.json missing default artwork marker\n");
+            return 1;
+        }
+    }
+
+    // 4c. Custom artwork import: a wide 800x500 image must land as a 2:3 card.
+    {
+        QImage wide(800, 500, QImage::Format_ARGB32);
+        wide.fill(0x3366aa);
+        const QString source = home + "/wide-art.png";
+        wide.save(source, "PNG");
+        const OpResult r = bridge.setInstanceCardArtwork("creative-world", source);
+        if (!r.ok) {
+            std::fprintf(stderr, "FAIL: artwork import failed: %s\n", r.error.toUtf8().constData());
+            return 1;
+        }
+        if (!cardHasPostageStamp(home + "/data/instances/creative-world/slimelauncher/card.png")) {
+            return 1;
+        }
+        QFile metaFile(home + "/data/instances/creative-world/slimelauncher/metadata.json");
+        if (!metaFile.open(QIODevice::ReadOnly) ||
+            !QString::fromUtf8(metaFile.readAll()).contains("\"artwork\": \"custom\"")) {
+            std::fprintf(stderr, "FAIL: metadata.json missing custom artwork marker\n");
+            return 1;
+        }
+    }
+
     // 5. Accounts read (empty file → empty list, no crash).
     {
         const QVector<AccountInfo> accounts = bridge.readAccounts();
@@ -108,8 +177,9 @@ int main(int argc, char* argv[]) {
         bridge.tailLog("creative-world");
         QTimer::singleShot(300, [&]() {
             QFile log(home + "/data/instances/creative-world/.minecraft/logs/latest.log");
-            log.open(QIODevice::Append);
-            log.write("[10:30:05] [main/INFO]: smoke-test append\n");
+            if (log.open(QIODevice::Append)) {
+                log.write("[10:30:05] [main/INFO]: smoke-test append\n");
+            }
         });
         QTimer::singleShot(2000, &loop, &QEventLoop::quit);
         loop.exec();

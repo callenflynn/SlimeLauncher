@@ -11,8 +11,9 @@ ErrorPanel::ErrorPanel(QWidget* parent)
     m_layout->setSpacing(16);
 
     auto* code = new QLabel(QLatin1String("ERROR"), this);
-    code->setStyleSheet(
-        QStringLiteral("color: #ff3b3b; font-weight: 900; font-size: 42px; letter-spacing: 6px;"));
+    code->setStyleSheet(QStringLiteral(
+        "color: %1; font-weight: 800; font-size: 42px; letter-spacing: 6px;")
+        .arg(QLatin1String("#ff4d6a")));
 
     m_errorTitle = new QLabel(this);
     m_errorTitle->setWordWrap(true);
@@ -20,7 +21,8 @@ ErrorPanel::ErrorPanel(QWidget* parent)
 
     m_errorDetail = new QLabel(this);
     m_errorDetail->setWordWrap(true);
-    m_errorDetail->setStyleSheet(QStringLiteral("color: #8a8a8a; font-size: 12px;"));
+    m_errorDetail->setStyleSheet(QStringLiteral("color: %1; font-size: 12px;")
+                                     .arg(QLatin1String("#9a9eb0")));
 
     auto* buttons = new QHBoxLayout();
     m_retryButton = new QPushButton(QLatin1String("Retry"), this);

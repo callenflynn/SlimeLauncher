@@ -7,7 +7,7 @@
   <title>Troubleshooting - Slime Launcher</title>
   <link rel="icon" href="slime.png" media="(prefers-color-scheme: light)">
     <link rel="icon" href="slime.png" media="(prefers-color-scheme: dark)">
-  <style>:root { --brand-accent: #39ff14; }</style>
+  <style>:root { --brand-accent: #00f0ff; }</style>
   <link rel="stylesheet" href="slime.css">
   <style>
     :root { color-scheme: light dark; }
@@ -80,6 +80,7 @@ paru -S prismlauncher-bin           # AUR</code></pre></div>
 <p><strong>"Prism binary found, but no instances directory."</strong> Launch the native Prism Launcher once — it creates <code>~/.local/share/PrismLauncher/instances</code> on first run — then retry. Custom data roots can be entered manually.</p>
 <h2 id="dashboard-problems">Dashboard problems</h2>
 <p><strong>Grid is empty but Prism shows instances.</strong> Press <code>F5</code> to force a re-scan. If still empty, confirm the <em>InstancesDir</em> in <code>~/.config/SlimeLauncher/slime.conf</code> points at the directory that actually contains your instances. Every instance must have an <code>instance.cfg</code> — directories without one are skipped by design.</p>
+<p><strong>A card shows the wrong artwork, or you want your own.</strong> Right-click the card (or press the Menu key on it) and choose <strong>Change Card Artwork…</strong>. Any PNG/JPG/WebP is accepted — it is center-cropped to an exact 2:3 poster (300x450–600x900 px) and saved to <code>&lt;instance&gt;/slimelauncher/card.png</code>. To re-roll the default art instead, delete that file and press <code>F5</code>; a bundled poster is re-seeded deterministically.</p>
 <p><strong>"NOW PLAYING" never appears.</strong> The badge is a heuristic: <code>latest.log</code> modified within the last 90 seconds. If Prism writes logs elsewhere (custom data root), the card cannot know — this is cosmetic only and never affects launching.</p>
 <p><strong>A card shows "Unknown" / "version unknown".</strong> <code>mmc-pack.json</code> is missing or unparsable for that instance. The card degrades gracefully instead of failing; launching still works because Prism resolves everything at runtime.</p>
 <h2 id="launch-failures">Launch failures</h2>
@@ -104,7 +105,7 @@ printf &#x27;{&quot;components&quot;:[{&quot;uid&quot;:&quot;net.minecraft&quot;
   &gt; /tmp/smoke/data/instances/test/mmc-pack.json
 
 SMOKE_HOME=/tmp/smoke QT_QPA_PLATFORM=offscreen ./build/bin/prism-bridge-smoke</code></pre></div>
-<p>Expected output ends with <code>ALL CHECKS PASSED</code> — it validates empty-environment rejection, environment validation, instance parsing, CLI launch routing, and live log tailing.</p>
+<p>Expected output ends with <code>ALL CHECKS PASSED</code> — it validates empty-environment rejection, environment validation, instance parsing (including <code>slimelauncher/</code> asset provisioning and the 2:3 crop engine), CLI launch routing, and live log tailing.</p>
     </main>
   </div>
   <footer>

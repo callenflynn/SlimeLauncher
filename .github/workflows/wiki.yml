@@ -50,8 +50,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Upstream CStaks/nsdocs has no git tags yet (its README still advertises
+      # @v1), so the runner cannot resolve that ref — pin to the default branch
+      # until upstream publishes v1, then re-pin here.
       - name: Build wiki
-        uses: CStaks/nsdocs@v1
+        uses: CStaks/nsdocs@main
         with:
           config: nsdocs.yml
           check: false

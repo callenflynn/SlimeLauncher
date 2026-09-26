@@ -7,7 +7,7 @@
   <title>Controller navigation - Slime Launcher</title>
   <link rel="icon" href="slime.png" media="(prefers-color-scheme: light)">
     <link rel="icon" href="slime.png" media="(prefers-color-scheme: dark)">
-  <style>:root { --brand-accent: #39ff14; }</style>
+  <style>:root { --brand-accent: #00f0ff; }</style>
   <link rel="stylesheet" href="slime.css">
   <style>
     :root { color-scheme: light dark; }
@@ -78,11 +78,11 @@
 <ul><li>Analog stick deadzone: <strong>35%</strong></li><li>Hold-repeat: initial delay <strong>450 ms</strong>, then every <strong>120 ms</strong></li><li>Up to <strong>4 gamepads</strong>; hot-plug re-enumeration happens automatically (~every 2 s)</li><li>Device loss is silent — keyboard and mouse always remain functional</li></ul>
 <p>!!! note Most controllers work out of the box: any device exposing <code>/dev/input/js*</code> (xpad, steamcontroller, generic HID joypads) is supported. If your pad lacks a standard button layout, the A/B/X/Y indices above follow the Linux joystick API convention.</p>
 <h2 id="keyboard-shortcuts">Keyboard shortcuts</h2>
-<table><thead><tr><th>Key</th><th>Action</th></tr></thead><tbody><tr><td><code>Enter</code></td><td>Play the selected instance</td></tr><tr><td><code>F5</code></td><td>Force-refresh the instance sync from disk</td></tr><tr><td><code>Escape</code></td><td>Back out: close log/error view → clear search filter</td></tr><tr><td><code>L</code></td><td>Open the log viewer for the selected instance</td></tr><tr><td><code>O</code></td><td>Open the native Prism UI</td></tr><tr><td>Arrows / Tab</td><td>Move focus across cards and navigation</td></tr></tbody></table>
+<table><thead><tr><th>Key</th><th>Action</th></tr></thead><tbody><tr><td><code>Enter</code></td><td>Play the selected instance</td></tr><tr><td><code>F5</code></td><td>Force-refresh the instance sync from disk</td></tr><tr><td><code>Escape</code></td><td>Back out: close log/error view → clear search filter</td></tr><tr><td><code>L</code></td><td>Open the log viewer for the selected instance</td></tr><tr><td><code>O</code></td><td>Open the native Prism UI</td></tr><tr><td>Arrows / Tab</td><td>Move focus across cards and navigation</td></tr><tr><td><code>Menu</code> key</td><td>Open the card context menu (Play / Change Artwork / Logs / Edit)</td></tr></tbody></table>
 <h2 id="mouse">Mouse</h2>
 <ul><li><strong>Click</strong> a card to select it</li><li><strong>Double-click</strong> to play it</li><li>Standard scroll mechanics everywhere</li></ul>
 <h2 id="focus-visuals">Focus visuals</h2>
-<p>The focused card gets a <strong>3px neon ring</strong> plus a painted 8px glow (QSS has no box-shadow, so <code>InstanceCard::paintEvent</code> renders the glow). Buttons get a 3px accent border. Hover, focus, and pressed states exist on every interactive element.</p>
+<p>The focused card <strong>scales up to 1.06x</strong> with a 140 ms eased animation and receives a <strong>neon focus ring</strong> (cyan stroke over a violet under-glow) plus an ambient radial halo — all painted by <code>InstanceCard::paintEvent</code> (QSS has no box-shadow). Hovering or D-pad-navigating to a card triggers the same animation. Buttons get a 2px accent border. Hover, focus, and pressed states exist on every interactive element.</p>
 <h2 id="how-it-works-internally">How it works internally</h2>
 <div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-text">/dev/input/js0 ──read()──► GamepadFilter (poll timer, 16 ms)
                              │  decode js_event

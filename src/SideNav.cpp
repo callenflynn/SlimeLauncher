@@ -7,31 +7,36 @@
 SideNav::SideNav(PrismBridge* bridge, QWidget* parent)
     : QWidget(parent), m_bridge(bridge) {
     setObjectName(QLatin1String(Constants::OBJ_SIDE_NAV));
-    setFixedWidth(200);
+    setFixedWidth(212);
 
     auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(14, 18, 14, 18);
+    layout->setContentsMargins(16, 20, 16, 20);
     layout->setSpacing(8);
 
     auto* brand = new QLabel(QLatin1String("SLIME"), this);
-    brand->setStyleSheet(
-        QStringLiteral("font-weight: 900; font-size: 20px; letter-spacing: 4px; color: #39ff14;"));
+    brand->setStyleSheet(QStringLiteral(
+        "font-weight: 800; font-size: 20px; letter-spacing: 5px; color: %1;")
+        .arg(QLatin1String("#00f0ff")));
     auto* subtitle = new QLabel(QLatin1String("LAUNCHER"), this);
-    subtitle->setStyleSheet(QStringLiteral("font-size: 10px; letter-spacing: 6px;"));
+    subtitle->setStyleSheet(QStringLiteral("font-size: 10px; letter-spacing: 7px; color: %1;")
+                                .arg(QLatin1String("#9a9eb0")));
+
+    m_allButton = new QPushButton(QLatin1String("All Games"), this);
+    m_refreshButton = new QPushButton(QLatin1String("Refresh  (F5)"), this);
+    m_prismButton = new QPushButton(QLatin1String("Open Prism  (O)"), this);
+    m_prismButton->setObjectName(QLatin1String(Constants::OBJ_BUTTON));
 
     m_accountChip = new QLabel(this);
+    m_accountChip->setObjectName(QLatin1String(Constants::OBJ_STATUS_CHIP));
     m_accountChip->setWordWrap(true);
-    m_accountChip->setStyleSheet(
-        QStringLiteral("background: #141414; border: 1px solid #262626; padding: 8px; font-size: 11px;"));
-
-    m_allButton = new QPushButton(QLatin1String("All Instances"), this);
-    m_refreshButton = new QPushButton(QLatin1String("Refresh (F5)"), this);
-    m_prismButton = new QPushButton(QLatin1String("Open Prism (O)"), this);
-    m_prismButton->setObjectName(QLatin1String(Constants::OBJ_BUTTON));
+    m_accountChip->setStyleSheet(QStringLiteral(
+        "background: %1; border: 1px solid %2; border-radius: 10px; padding: 10px;"
+        " font-size: 11px; color: %3;")
+        .arg(QLatin1String("#1a1a24"), QLatin1String("#2a2a38"), QLatin1String("#9a9eb0")));
 
     layout->addWidget(brand);
     layout->addWidget(subtitle);
-    layout->addSpacing(12);
+    layout->addSpacing(16);
     layout->addWidget(m_allButton);
     layout->addWidget(m_refreshButton);
     layout->addWidget(m_prismButton);

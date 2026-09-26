@@ -36,6 +36,7 @@ Slime Launcher is built for the couch: a gamepad, keyboard, and mouse all drive 
 | `L` | Open the log viewer for the selected instance |
 | `O` | Open the native Prism UI |
 | Arrows / Tab | Move focus across cards and navigation |
+| `Menu` key | Open the card context menu (Play / Change Artwork / Logs / Edit) |
 
 ## Mouse
 
@@ -45,7 +46,7 @@ Slime Launcher is built for the couch: a gamepad, keyboard, and mouse all drive 
 
 ## Focus visuals
 
-The focused card gets a **3px neon ring** plus a painted 8px glow (QSS has no box-shadow, so `InstanceCard::paintEvent` renders the glow). Buttons get a 3px accent border. Hover, focus, and pressed states exist on every interactive element.
+The focused card **scales up to 1.06x** with a 140 ms eased animation and receives a **neon focus ring** (cyan stroke over a violet under-glow) plus an ambient radial halo — all painted by `InstanceCard::paintEvent` (QSS has no box-shadow). Hovering or D-pad-navigating to a card triggers the same animation. Buttons get a 2px accent border. Hover, focus, and pressed states exist on every interactive element.
 
 ## How it works internally
 

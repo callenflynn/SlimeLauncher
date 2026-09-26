@@ -1,11 +1,14 @@
 #include "DashboardWindow.h"
 #include "ErrorPanel.h"
+#include "ImageProcessor.h"
 
+#include <QFileDialog>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QStackedWidget>
@@ -36,27 +39,28 @@ void DashboardWindow::buildUi() {
     rootLayout->setContentsMargins(0, 0, 0, 0);
     rootLayout->setSpacing(0);
 
-    // ---- Top bar ----------------------------------------------------------
+    // ---- Top bar (glass) ----------------------------------------------------
     auto* topBar = new QWidget(central);
-    topBar->setStyleSheet(QStringLiteral("background: #0d0d0d; border-bottom: 1px solid #262626;"));
+    topBar->setObjectName(QLatin1String(Constants::OBJ_TOP_BAR));
     auto* topLayout = new QHBoxLayout(topBar);
-    topLayout->setContentsMargins(18, 12, 18, 12);
+    topLayout->setContentsMargins(22, 14, 22, 14);
 
     m_title = new QLabel(QString::fromUtf8(Constants::APP_NAME).toUpper(), topBar);
-    m_title->setStyleSheet(QStringLiteral("font-weight: 900; font-size: 16px; letter-spacing: 3px;"));
+    m_title->setStyleSheet(QStringLiteral(
+        "font-weight: 800; font-size: 15px; letter-spacing: 4px; color: %1;")
+        .arg(QLatin1String("#00f0ff")));
 
     m_search = new QLineEdit(topBar);
-    m_search->setPlaceholderText(QLatin1String("Filter instances…"));
-    m_search->setFixedWidth(280);
-    connect(m_search, &QLineEdit::textChanged, this, [this](const QString& text) {
-        for (InstanceCard* card : m_cards) {
-            const bool visible = card->info().name.contains(text, Qt::CaseInsensitive);
-            card->setVisible(visible);
-        }
-    });
+    m_search->setObjectName(QLatin1String(Constants::OBJ_SEARCH));
+    m_search->setPlaceholderText(QLatin1String("Filter games…"));
+    m_search->setFixedWidth(300);
+    m_search->setClearButtonEnabled(true);
+    connect(m_search, &QLineEdit::textChanged, this, &DashboardWindow::applyFilter);
 
     m_clock = new QLabel(topBar);
-    m_clock->setStyleSheet(QStringLiteral("color: #8a8a8a; font-size: 12px;"));
+    m_clock->setStyleSheet(
+        QStringLiteral("color: %1; font-size: 12px; font-weight: 600;")
+            .arg(QLatin1String("#9a9eb0")));
 
     topLayout->addWidget(m_title);
     topLayout->addStretch(1);
@@ -64,7 +68,7 @@ void DashboardWindow::buildUi() {
     topLayout->addSpacing(18);
     topLayout->addWidget(m_clock);
 
-    // ---- Middle: SideNav + grid stack + log viewer ------------------------
+    // ---- Middle: SideNav + grid stack ---------------------------------------
     auto* middle = new QWidget(central);
     auto* middleLayout = new QHBoxLayout(middle);
     middleLayout->setContentsMargins(0, 0, 0, 0);
@@ -75,9 +79,6 @@ void DashboardWindow::buildUi() {
     connect(m_sideNav, &SideNav::openPrismRequested, this, &DashboardWindow::openPrism);
     connect(m_sideNav, &SideNav::allRequested, this, [this]() {
         m_search->clear();
-        for (InstanceCard* card : m_cards) {
-            card->setVisible(true);
-        }
     });
 
     m_stack = new QStackedWidget(middle);
@@ -91,16 +92,20 @@ void DashboardWindow::buildUi() {
     m_scroll = new QScrollArea(gridPage);
     m_scroll->setWidgetResizable(true);
     m_scroll->setFrameShape(QFrame::NoFrame);
+    m_scroll->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_gridHost = new QWidget(m_scroll);
+    m_gridHost->setStyleSheet(QStringLiteral("background: transparent;"));
     m_grid = new QGridLayout(m_gridHost);
-    m_grid->setContentsMargins(18, 18, 18, 18);
-    m_grid->setSpacing(Constants::CARD_SPACING);
+    m_grid->setContentsMargins(Constants::GRID_MARGIN, Constants::GRID_MARGIN, Constants::GRID_MARGIN,
+                               Constants::GRID_MARGIN);
+    m_grid->setSpacing(Constants::GRID_SPACING);
     m_grid->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     m_scroll->setWidget(m_gridHost);
 
     m_emptyLabel = new QLabel(QLatin1String(Constants::MSG_EMPTY_GRID), gridPage);
     m_emptyLabel->setAlignment(Qt::AlignCenter);
-    m_emptyLabel->setStyleSheet(QStringLiteral("color: #8a8a8a; font-size: 14px;"));
+    m_emptyLabel->setStyleSheet(
+        QStringLiteral("color: %1; font-size: 15px;").arg(QLatin1String("#9a9eb0")));
 
     gridLayout->addWidget(m_scroll, 1);
     gridLayout->addWidget(m_emptyLabel, 1);
@@ -126,14 +131,15 @@ void DashboardWindow::buildUi() {
     middleLayout->addWidget(m_sideNav);
     middleLayout->addWidget(m_stack, 1);
 
-    // ---- Bottom control strip ---------------------------------------------
+    // ---- Bottom control strip (glass) ----------------------------------------
     auto* bottom = new QWidget(central);
-    bottom->setStyleSheet(QStringLiteral("background: #0d0d0d; border-top: 1px solid #262626;"));
+    bottom->setObjectName(QLatin1String(Constants::OBJ_BOTTOM_BAR));
     auto* bottomLayout = new QHBoxLayout(bottom);
-    bottomLayout->setContentsMargins(18, 12, 18, 12);
+    bottomLayout->setContentsMargins(22, 12, 22, 12);
 
     m_detailLabel = new QLabel(QLatin1String(Constants::MSG_NOTHING_SELECTED), bottom);
-    m_detailLabel->setStyleSheet(QStringLiteral("color: #8a8a8a; font-size: 12px;"));
+    m_detailLabel->setStyleSheet(
+        QStringLiteral("color: %1; font-size: 12px;").arg(QLatin1String("#9a9eb0")));
 
     m_playButton = new QPushButton(QLatin1String("▶  Play"), bottom);
     m_playButton->setObjectName(QLatin1String(Constants::OBJ_PRIMARY_BUTTON));
@@ -187,40 +193,61 @@ void DashboardWindow::rebuildGrid(const QVector<InstanceCardModel>& instances) {
         return;
     }
 
-    // Hero card: most recently played instance gets double height + width.
+    int columns = qBound(Constants::CARD_COLUMNS_MIN,
+                         qMax(1, (width() - 2 * Constants::GRID_MARGIN + Constants::GRID_SPACING) /
+                                     (Constants::CARD_WIDTH + Constants::GRID_SPACING)),
+                         Constants::CARD_COLUMNS_MAX);
+
+    int row = 0;
+    int col = 0;
+    for (const InstanceCardModel& info : instances) {
+        auto* card = new InstanceCard(info, m_gridHost);
+        connect(card, &InstanceCard::selected, this, &DashboardWindow::setSelectedInstance);
+        connect(card, &InstanceCard::activated, this, [this](const InstanceCardModel& target) {
+            setSelectedInstance(target);
+            playSelected();
+        });
+        connect(card, &InstanceCard::editRequested, this, [this](const InstanceCardModel& target) {
+            const OpResult result = m_bridge->openPrismUi();
+            if (!result.ok) {
+                showError(result.error, QString());
+            }
+        });
+        connect(card, &InstanceCard::artworkChangeRequested, this,
+                &DashboardWindow::changeArtworkFor);
+        connect(card, &InstanceCard::logsRequested, this, [this](const InstanceCardModel& target) {
+            setSelectedInstance(target);
+            openLogs();
+        });
+        m_grid->addWidget(card, row, col);
+        m_cards.append(card);
+
+        if (++col >= columns) {
+            col = 0;
+            ++row;
+        }
+    }
+
+    // Select the most recently played card by default for instant gamepad play.
     InstanceCardModel hero = instances.first();
     for (const InstanceCardModel& info : instances) {
         if (info.lastPlayed > hero.lastPlayed) {
             hero = info;
         }
     }
+    setSelectedInstance(hero);
+    if (InstanceCard* heroCard = cardForId(hero.id)) {
+        heroCard->setFocus();
+    }
+}
 
-    int row = 0;
-    int col = 0;
-    for (const InstanceCardModel& info : instances) {
-        auto* card = new InstanceCard(info, m_gridHost);
-        const bool isHero = (info.id == hero.id);
-        card->setObjectName(QLatin1String(isHero ? Constants::OBJ_HERO_CARD
-                                                 : Constants::OBJ_INSTANCE_CARD));
-        if (isHero) {
-            card->setFixedSize(Constants::CARD_SIZE * 2 + QSize(Constants::CARD_SPACING, Constants::CARD_SPACING));
-        }
-        connect(card, &InstanceCard::selected, this, &DashboardWindow::setSelectedInstance);
-        connect(card, &InstanceCard::activated, this, [this](const InstanceCardModel& info) {
-            setSelectedInstance(info);
-            playSelected();
-        });
-        m_grid->addWidget(card, row, col);
-        m_cards.append(card);
-
-        if (++col >= Constants::GRID_MAX_COLUMNS) {
-            col = 0;
-            ++row;
+InstanceCard* DashboardWindow::cardForId(const QString& id) const {
+    for (InstanceCard* card : m_cards) {
+        if (card->info().id == id) {
+            return card;
         }
     }
-
-    // Select the hero card by default for immediate gamepad play.
-    setSelectedInstance(hero);
+    return nullptr;
 }
 
 void DashboardWindow::clearGrid() {
@@ -229,6 +256,12 @@ void DashboardWindow::clearGrid() {
         card->deleteLater();
     }
     m_cards.clear();
+}
+
+void DashboardWindow::applyFilter(const QString& text) {
+    for (InstanceCard* card : m_cards) {
+        card->setVisible(card->info().name.contains(text, Qt::CaseInsensitive));
+    }
 }
 
 void DashboardWindow::setSelectedInstance(const InstanceCardModel& info) {
@@ -284,12 +317,41 @@ void DashboardWindow::openPrism() {
     }
 }
 
+void DashboardWindow::changeArtworkFor(const InstanceCardModel& info) {
+    const QString source = QFileDialog::getOpenFileName(
+        this, QLatin1String(Constants::MSG_ARTWORK_PICK_TITLE), QDir::homePath(),
+        QLatin1String(Constants::MSG_ARTWORK_PICK_FILTER));
+    if (source.isEmpty()) {
+        return;
+    }
+    const OpResult result = m_bridge->setInstanceCardArtwork(info.id, source);
+    if (!result.ok) {
+        QMessageBox::warning(this, QLatin1String(Constants::APP_NAME),
+                             QLatin1String(Constants::MSG_ARTWORK_FAILED) + QStringLiteral("\n\n") +
+                                 result.error);
+        return;
+    }
+    refreshInstances();
+}
+
 void DashboardWindow::updateClock() {
     m_clock->setText(QTime::currentTime().toString(QStringLiteral("HH:mm")));
 }
 
 void DashboardWindow::keyPressEvent(QKeyEvent* event) {
-    switch (event->key()) {
+    const int key = event->key();
+
+    // Grid spatial navigation — shared by arrows, D-pad and left stick
+    // (GamepadFilter synthesizes arrow keys for those).
+    if (key == Qt::Key_Left || key == Qt::Key_Right || key == Qt::Key_Up || key == Qt::Key_Down) {
+        if (m_stack->currentIndex() == 0 && !m_cards.isEmpty() && !m_search->hasFocus()) {
+            moveGridFocus(key);
+            event->accept();
+            return;
+        }
+    }
+
+    switch (key) {
         case Qt::Key_F5:
             refreshInstances();
             event->accept();
@@ -324,4 +386,61 @@ void DashboardWindow::keyPressEvent(QKeyEvent* event) {
             break;
     }
     QMainWindow::keyPressEvent(event);
+}
+
+void DashboardWindow::moveGridFocus(int key) {
+    InstanceCard* current = m_hasSelection ? cardForId(m_selected.id) : nullptr;
+    if (!current) {
+        if (!m_cards.isEmpty()) {
+            m_cards.first()->setFocus();
+            setSelectedInstance(m_cards.first()->info());
+        }
+        return;
+    }
+
+    const int columns = gridColumns();
+    const int index = static_cast<int>(m_cards.indexOf(current));
+    if (index < 0) {
+        return;
+    }
+    int target = index;
+    switch (key) {
+        case Qt::Key_Left:
+            target = (index % columns == 0) ? index : index - 1;
+            break;
+        case Qt::Key_Right:
+            target = (index + 1 >= m_cards.size()) ? index : index + 1;
+            break;
+        case Qt::Key_Up:
+            target = (index - columns >= 0) ? index - columns : index;
+            break;
+        case Qt::Key_Down:
+            target = (index + columns < m_cards.size()) ? index + columns : index;
+            break;
+        default:
+            return;
+    }
+    if (target == index) {
+        return;
+    }
+    InstanceCard* next = m_cards.at(target);
+    setSelectedInstance(next->info());
+    next->setFocus();
+    m_scroll->ensureWidgetVisible(next, 24, 24);
+}
+
+int DashboardWindow::gridColumns() const {
+    const int available = width() - m_sideNav->width() - 2 * Constants::GRID_MARGIN;
+    return qBound(Constants::CARD_COLUMNS_MIN,
+                  qMax(1, (available + Constants::GRID_SPACING) /
+                              (Constants::CARD_WIDTH + Constants::GRID_SPACING)),
+                  Constants::CARD_COLUMNS_MAX);
+}
+
+void DashboardWindow::resizeEvent(QResizeEvent* event) {
+    QMainWindow::resizeEvent(event);
+    // Re-flow the grid to the new column count; cards keep their own size.
+    if (!m_instances.isEmpty()) {
+        rebuildGrid(m_instances);
+    }
 }

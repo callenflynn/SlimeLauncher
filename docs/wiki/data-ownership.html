@@ -7,7 +7,7 @@
   <title>Data ownership - Slime Launcher</title>
   <link rel="icon" href="slime.png" media="(prefers-color-scheme: light)">
     <link rel="icon" href="slime.png" media="(prefers-color-scheme: dark)">
-  <style>:root { --brand-accent: #39ff14; }</style>
+  <style>:root { --brand-accent: #00f0ff; }</style>
   <link rel="stylesheet" href="slime.css">
   <style>
     :root { color-scheme: light dark; }
@@ -78,15 +78,31 @@
 │   └── &lt;id&gt;/                            ← directory name = CLI launch id
 │       ├── instance.cfg                 ← name, iconKey, lastLaunchTime   [read-only to Slime]
 │       ├── mmc-pack.json                ← components: loader + game ver   [read-only to Slime]
+│       ├── slimelauncher/               ← Slime-owned asset folder (see below)
 │       └── .minecraft/
 │           └── logs/latest.log          ← live tail target                [read-only to Slime]
 ├── accounts.json                        ← MS account sessions             [read-only to Slime]
 ├── icons/&lt;key&gt;.png|jpg|svg|…            ← instance icons                  [read-only to Slime]
 └── prismlauncher.cfg                    ← Prism global config             [never touched]</code></pre></div>
 <h3 id="what-slime-parses-from-each-file">What Slime parses from each file</h3>
-<table><thead><tr><th>File</th><th>Keys used</th><th>Purpose</th></tr></thead><tbody><tr><td><code>instance.cfg</code></td><td><code>name</code>, <code>iconKey</code>, <code>lastLaunchTime</code></td><td>Card title, icon, last-played time (both flat and <code>[General]</code>-section spellings accepted)</td></tr><tr><td><code>mmc-pack.json</code></td><td><code>components[].uid</code>, <code>components[].version</code></td><td>Loader chip (<code>net.fabricmc.*</code> → Fabric, etc.) and <code>net.minecraft</code> version</td></tr><tr><td><code>accounts.json</code></td><td><code>name</code>, <code>type</code>, <code>lastSync</code></td><td>Read-only account chip in the SideNav</td></tr><tr><td><code>latest.log</code></td><td>—</td><td>Live tail for the log viewer; mtime recency drives the <code>NOW PLAYING</code> heuristic</td></tr></tbody></table>
-<h2 id="slime-owned">Slime-owned</h2>
-<div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-text">~/.config/SlimeLauncher/slime.conf       ← the ONLY file Slime writes</code></pre></div>
+<table><thead><tr><th>File</th><th>Keys used</th><th>Purpose</th></tr></thead><tbody><tr><td><code>instance.cfg</code></td><td><code>name</code>, <code>iconKey</code>, <code>lastLaunchTime</code></td><td>Card title, icon, last-played time (both flat and <code>[General]</code>-section spellings accepted)</td></tr><tr><td><code>mmc-pack.json</code></td><td><code>components[].uid</code>, <code>components[].version</code></td><td>Loader badge (<code>net.fabricmc.*</code> → Fabric, etc.) and <code>net.minecraft</code> version</td></tr><tr><td><code>accounts.json</code></td><td><code>name</code>, <code>type</code>, <code>lastSync</code></td><td>Read-only account chip in the SideNav</td></tr><tr><td><code>latest.log</code></td><td>—</td><td>Live tail for the log viewer; mtime recency drives the <code>NOW PLAYING</code> heuristic</td></tr></tbody></table>
+<h2 id="slime-owned-inside-an-instance-slimelauncher">Slime-owned inside an instance: <code>slimelauncher/</code></h2>
+<p>Each instance directory contains a Slime-owned asset folder, auto-created on scan:</p>
+<div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-text">instances/&lt;id&gt;/slimelauncher/
+├── card.png          ← 2:3 poster cover (exact 2*width = 3*height, 300x450–600x900 px)
+├── background.png    ← optional hero wallpaper (reserved; not yet rendered)
+└── metadata.json     ← display overrides</code></pre></div>
+<p><code>metadata.json</code> records how the card was produced:</p>
+<div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-json">{
+    &quot;artwork&quot;: &quot;default | custom&quot;,
+    &quot;source&quot;: &quot;default poster 3 | original-file-name.png&quot;,
+    &quot;updated&quot;: &quot;2026-09-25T21:04:10.512Z&quot;
+}</code></pre></div>
+<p>Provisioning rules (<code>src/ImageProcessor.cpp</code>):</p>
+<ol><li><code>ensureAssets()</code> creates the folder if missing.</li><li>If no <code>card.png</code> exists, a <strong>deterministic</strong> default poster is picked (SHA-256 of the instance id modulo the five bundled cards) — stable across rescans, so cards never reshuffle.</li><li>The chosen image passes through the center-crop engine (<code>Qt::KeepAspectRatioByExpanding</code> semantics, then a final exact-2:3 pin) and is written as PNG.</li><li>"Change Card Artwork…" overwrites <code>card.png</code> with a user-selected image and flips metadata to <code>artwork: custom</code>.</li><li>Nothing outside <code>slimelauncher/</code> is ever written inside an instance.</li></ol>
+<p>Prism ignores this folder entirely — it is not a Prism config file, and no Prism key collides with it.</p>
+<h2 id="slime-owned-outside-prism">Slime-owned outside Prism</h2>
+<div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-text">~/.config/SlimeLauncher/slime.conf       ← theme + validated Prism paths</code></pre></div>
 <p>Contents:</p>
 <div class="code-block"><pre><button class="copy-btn" type="button">Copy</button><code class="language-ini">[General]
 Theme=dark|light
